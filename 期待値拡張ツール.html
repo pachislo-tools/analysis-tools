@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>期待値拡張ツール</title>
+<style>
+  :root{
+    --bg:#f6f7f9;
+    --card:#fff;
+    --text:#111;
+    --muted:#555;
+    --line:#ddd;
+    --shadow:0 2px 6px rgba(0,0,0,.08);
+    --radius:12px;
+    --accent:#0b65ff;
+    --danger:#c00;
+    --warn:#e6a100;
+    --miss:#ffdddd;
+  }
+  body{
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    margin:0;
+    padding:16px;
+  }
+  h1{font-size:18px;margin:0 0 12px}
+  h2{font-size:17px;margin:0 0 10px}
+  .card{
+    background:var(--card);
+    padding:14px;
+    border-radius:var(--radius);
+    margin-bottom:12px;
+    box-shadow:var(--shadow);
+  }
+  .row{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    align-items:flex-end;
+    margin-bottom:10px;
+  }
+  label{font-size:12.5px;color:var(--text)}
+  .hint{font-size:12px;color:var(--muted);line-height:1.55;margin-top:6px; white-space:pre-wrap;}
+  .warn{color:var(--warn)}
+  .danger{color:var(--danger)}
+  .pill{
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:999px;
+    font-size:12px;
+    background:#f0f2f5;
+    color:#333;
+  }
+  input,select,button{
+    font-size:14px;
+    padding:8px 10px;
+    border:1px solid #cfcfcf;
+    border-radius:10px;
+    background:#fff;
+  }
+  input,select{min-width:160px}
+  button{
+    cursor:pointer;
+    border:1px solid #bbb;
+    background:#fafafa;
+  }
+  button.primary{
+    border-color:var(--accent);
+    color:#fff;
+    background:var(--accent);
+  }
+  button.dangerBtn{
+    border-color:var(--danger);
+    color:var(--danger);
+    background:#fff;
+  }
+  button:active{transform:translateY(1px)}
+  .big{font-size:18px;font-weight:800}
+  .kpi{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    margin-top:6px;
+  }
+  .kpi .line{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:baseline;
+    font-size:14px;
+  }
+  .kpi .label{color:var(--muted)}
+  .tableWrap{
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+    border:1px solid #eee;
+    border-radius:12px;
+    margin-top:10px;
+  }
+  table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    min-width:1040px;
+    background:#fff;
+  }
+  th,td{
+    border-bottom:1px solid var(--line);
+    padding:8px;
+    font-size:13px;
+    text-align:center;
+    vertical-align:middle;
+    white-space:nowrap;
+  }
+  thead th{
+    position:sticky;
+    top:0;
+    background:#fff;
+    z-index:1;
+  }
+  tbody tr:last-child td{border-bottom:none}
+  td input{min-width:110px;width:110px}
+  .col-wide input{min-width:160px;width:160px}
+  .hidden{ display:none !important; }
+
+  .groupHeader{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:flex-start;
+    justify-content:space-between;
+    margin:4px 0 8px;
+  }
+  .groupHeader .left{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+  }
+  .mini{
+    font-size:12px;
+    color:var(--muted);
+  }
+  .twoCol{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:10px;
+    width:100%;
+  }
+
+  /* info button */
+  .h2row{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .h2row .left{
+    display:flex; gap:8px; align-items:center;
+  }
+  .infoBtn{
+    width:26px; height:26px;
+    border-radius:999px;
+    border:1px solid #cfcfcf;
+    background:#fff;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    color:#333;
+    cursor:pointer;
+    user-select:none;
+  }
+  .infoBtn:active{transform:translateY(1px)}
+  .subtle{
+    font-size:12px;
+    color:var(--muted);
+    margin-top:-4px;
+  }
+
+  /* required highlight */
+  .req-miss{
+    background:var(--miss);
+    border-color:#ff9b9b !important;
+  }
+  .topNote{
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:6px;
+  }
+
+  /* help page */
+  .toc a{
+    display:block;
+    padding:6px 0;
+    color:var(--accent);
+    text-decoration:none;
+    font-size:14px;
+  }
+  .toc a:active{opacity:.7}
+  .helpSec{
+    padding-top:8px;
+    border-top:1px dashed #eee;
+    margin-top:10px;
+  }
+  .helpSec h3{
+    margin:10px 0 6px;
+    font-size:15px;
+  }
+
+  @media (max-width: 720px){
+    body{padding:12px}
+    h2{font-size:16px}
+    input,select{min-width:unset;width:100%}
+    .row{gap:10px}
+    .row > label{flex:1 1 240px}
+    button{width:100%}
+    table{min-width:980px}
+    .twoCol{grid-template-columns:1fr;}
+  }
+
+  /* --- password gate (purchase) --- */
+  .gate{
+    position:fixed; inset:0; background:rgba(10,10,12,.75);
+    display:flex; align-items:center; justify-content:center; padding:16px; z-index:9999;
+  }
+  .gate .panel{
+    width:min(560px, 100%);
+    background:#fff; border-radius:14px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.25);
+  }
+  .gate h2{ margin:0 0 10px; font-size:18px; }
+  .gate .note{ font-size:12.5px; color:#444; line-height:1.65; white-space:pre-wrap; }
+  .gate .row{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; align-items:flex-end; }
+  .gate input{ flex:1 1 240px; }
+  .gate button{ flex:0 0 auto; }
+  .gate .err{ margin-top:10px; color:#c00; font-size:12.5px; }
+
+</style>
+</head>
+
+<body>
+
+<div id="gate" class="gate hidden" aria-hidden="true">
+  <div class="panel">
+    <h2>購入者限定</h2>
+    <div class="note">本ツールは購入者限定です。
+無断転載・コピー・再配布（パスワード共有を含む）は禁止しています。
+発見した場合は、販売停止・法的措置を含む対応を行う場合があります。</div>
+    <div class="row">
+      <label style="flex:1 1 100%;">
+        パスワード
+        <input id="gatePw" type="password" autocomplete="current-password" placeholder="パスワードを入力">
+      </label>
+      <button id="gateBtn" class="primary" type="button">解除</button>
+    </div>
+    <div id="gateErr" class="err" style="display:none;">パスワードが違います。</div>
+  </div>
+</div>
+<h1>期待値拡張ツール</h1>
+
+
+<details id="howto" class="card" style="margin-top:0; margin-bottom:12px;">
+  <summary style="cursor:pointer; font-weight:800; font-size:18px;">▶ 使い方（タップで開閉）</summary>
+  <div style="margin-top:10px;">
+<div class="toc">
+    <a href="#h_flow">1. 基本の流れ（3ステップ）</a>
+    <a href="#h_spin">2. 回すGの算出モード（基本／例外／最終）</a>
+    <a href="#h_hitRate">3. 当選率(%)（ゾーン・天井）</a>
+    <a href="#h_chain">4. 続行（連鎖：①→②→③）</a>
+    <a href="#h_noneq">5. 非等価（なぜ入力が多い？）</a>
+    <a href="#h_blur">6. ブレるポイント（近似の注意）</a>
+    <a href="#h_onoff">7. チェック（ON）の意味</a>
+    <a href="#h_save">8. 保存（複数機種切替）</a>
+    <a href="#h_faq">FAQ</a>
+  </div>
+
+  <div class="helpSec" id="h_flow">
+    <h3>1. 基本の流れ（3ステップ）</h3>
+    <div class="hint">
+1) 当該を入力（期待値 / 機械割 / 当選率）
+2) 必要なら続行をONにして入力（続行①→②→③…）
+3) 「全体を計算」を押す
+
+※メインは説明を最小化しています。迷ったらこのページの該当章を確認してください。
+    </div>
+  </div>
+
+  <div class="helpSec" id="h_spin">
+    <h3>2. 回すGの算出モード（基本／例外／最終）</h3>
+    <div class="hint">
+■ 期待値＋機械割（基本）
+・普段はこれだけでOK。入力が少なくて速い。
+・消化回転数（通常時）は 期待値 と機械割から逆算します。
+
+■ 初当たり確率(1/◯◯)（例外）
+・期待値/機械割が分からない、または「当たりまでのG」を明確に入れたいときに使用。
+・「当該平均獲得枚数(TY)/実質純増」を入れると、当選後に増える消化G（平均獲得枚数(TY)÷実質純増）も平均消化Gに加算します。
+
+■ 手動回転数（最終）
+・ゾーン狙い等で「この区間を何G回す」が先に決まっている場合に使用。
+    </div>
+  </div>
+
+  <div class="helpSec" id="h_hitRate">
+    <h3>3. 当選率(%)（ゾーン・天井）</h3>
+    <div class="hint">
+当選率(%)は「その狙い方で当たる確率」です（初期値100）。
+
+例）ゾーン狙いで当たる確率が50%なら、当選率=50
+・期待値は 期待値×0.5 のように期待化されます
+・回すGも 期待G×0.5 のように期待化されます
+
+※初当たり確率(1/◯◯)に「外れた分の回転」も含めた平均を入れている運用なら、
+このツールの扱い（×当選率で期待化）がちょうど噛み合います。
+    </div>
+  </div>
+
+  <div class="helpSec" id="h_chain">
+    <h3>4. 続行（連鎖：①→②→③）</h3>
+    <div class="hint">
+続行①＝当該当選後の続行（条件付き確率）
+続行②＝続行①に到達した後の続行（条件付き確率）
+続行③＝続行②に到達した後…
+
+例：続行①=20%、続行②=4.9%
+→ 続行②の実効到達率は 0.2×0.049=0.0098（0.98%）
+
+※続行内の表が複数行なら「分岐」です（確率%の合計が100%でも、20%でも、運用に合わせてOK）
+当選率(%)も掛けて期待化されます。
+    </div>
+  </div>
+
+  <div class="helpSec" id="h_noneq">
+    <h3>5. 非等価（なぜ入力が多い？）</h3>
+    <div class="hint">
+非等価は「投資が 現金 か 持ちメダル か」で期待収支が変わります。
+そのため以下が必要になります：
+・貸出（枚/1000円）…購入単価
+・交換（枚/1,000円）…換金単価
+・1k回転数 … 投資枚数/1Gの推定
+・持ちメダル … 現金投資がどれくらい混ざるか
+・※現金投資が絡む非等価条件では、投資状況（持ちメダル比率等）により数値がブレる場合があります。
+    </div>
+  </div>
+
+  <div class="helpSec" id="h_blur">
+    <h3>6. ブレるポイント（近似の注意）</h3>
+    <div class="hint">
+このツールは「厳密な当選分布（何Gで当たるかの全分布）」までは入力しない設計です。
+その代わり、現金投資割合は
+・平均初当たり（1/x相当）
+・初当たり確率(1/◯◯) と 1k回転数 を使って「初当たりまでの現金投資」を近似します。
+の近似で期待化しています。
+
+ブレが出やすい条件：
+・天井が深い
+・当選率が低いゾーン（外れが多い）
+・持ちメダルが少ない
+→ この場合は、非等価の期待収支が現場感とズレる可能性があります（目安として使うのが安全）
+
+※実戦では、表示されている機械割より1〜2％低く見積もって判断すると、体感値に近くなることが多いです。
+    </div>
+  </div>
+
+  <div class="helpSec" id="h_onoff">
+    <h3>7. チェック（ON）の意味</h3>
+    <div class="hint">
+続行は「チェックがONのものだけ」計算に含まれます。
+また連鎖なので、途中がOFFなら、その先をONにしても無視されます（飛びON防止）。
+    </div>
+  </div>
+
+  <div class="helpSec" id="h_save">
+    <h3>8. 保存（複数機種切替）</h3>
+    <div class="hint">
+・「保存スロット」で機種ごとに切替できます
+・保存：選択中スロットに上書き
+・別名で保存：新しいスロットを作成
+・このスロット削除：選択中のみ削除
+・全スロット削除：全部削除
+
+※保存先はこの端末のブラウザ（localStorage）です。
+PCとスマホ間で自動同期はされません。
+    </div>
+  </div>
+
+  <div class="helpSec" id="h_faq">
+    <h3>FAQ</h3>
+    <div class="hint">
+Q. 続行②の確率は何？
+A. 続行①に到達した後の条件付き確率です。全体の実効到達は「前段まで×当段」です。
+
+Q. メインに説明が無いけど大丈夫？
+A. メインはスッキリ表示に寄せています。ⓘボタンで該当章に飛べます。
+
+Q. 非等価が現場とズレる気がする
+A. 当選分布を厳密入力しない設計なので、条件によってブレます（特に低当選率ゾーン・深い天井）。
+    </div>
+  </div>
+</div>
+
+
+  </div>
+</details>
+<!-- ===== Top card (minimal) ===== -->
+<div class="card">
+  <div class="row">
+    <label>表示モード<br>
+      <select id="viewMode">
+        <option value="equal">等価</option>
+        <option value="nonequal">非等価</option>
+        </select>
+    </label>
+
+    <label>消化回転数の算出<br>
+      <select id="spinMode">
+        <option value="machine" selected>期待値＋機械割（基本）</option>
+        <option value="hit">初当たり確率(1/◯◯)（例外）</option>
+        <option value="manual">手動回転数（最終）</option>
+      </select>
+    </label>
+
+    <span class="pill">スマホ：表は横スクロール</span>
+  </div>
+
+  <!-- multi save -->
+  <div class="row">
+    <label>保存スロット（機種切替）<br>
+      <select id="slotSelect"></select>
+    </label>
+    <label>このスロット名<br>
+      <input id="slotName" type="text" placeholder="例：沖ドキGOLD / ダンベル / 北斗">
+    </label>
+  </div>
+
+  <div class="row">
+    <button class="primary" id="btnCalcAll">全体を計算</button>
+    <button id="btnSave">保存</button>
+    <button id="btnSaveAs">別名で保存</button>
+    <button id="btnLoad">読込</button>
+  </div>
+
+  <div class="row">
+    <button class="dangerBtn" id="btnDeleteSlot">このスロット削除</button>
+    <button class="dangerBtn" id="btnDeleteAll">全スロット削除</button>
+    <button id="btnClear">入力クリア</button>
+  </div>
+
+  <div class="topNote">
+    <span id="calcTargetHint">未計算</span>
+    <span id="missingHint" class="warn"></span>
+  </div>
+
+  <!-- main page: no long explanations -->
+  
+</div>
+
+<!-- ===== Main sections ===== -->
+<div class="card" id="mainNow">
+  <div class="h2row">
+    <div class="left">
+      <h2 style="margin:0">当該入力</h2>
+      <div class="infoBtn" data-help="#h_spin" title="使い方へ">i</div>
+      <div class="infoBtn" data-help="#h_hitRate" title="当選率の説明">i</div>
+    </div>
+    <button id="btnCalcNow">当該だけ計算</button>
+  </div>
+
+  <div class="row">
+    <label>期待値(円)<br><input id="evNow" type="number" placeholder="例：982"></label>
+    <label>機械割(%)<br><input id="machineNow" type="number" step="0.01" placeholder="例：102.7"></label>
+    <label>当選率(%)<br><input id="hitRateNow" type="number" step="0.1" value="100"></label>
+
+    <label id="hitNowWrap" class="hidden">初当たり確率(1/◯◯)<br><input id="hitNow" type="number" step="0.1" placeholder="例：492"></label>
+    <label id="manualNowWrap" class="hidden">手動回転数（回すG）<br><input id="spinNowManual" type="number" step="1" placeholder="例：492"></label>
+  </div>
+
+  <div class="row hidden" id="tyAreaNow">
+    <label>当該平均獲得枚数(TY)(枚)<br><input id="tyNow" type="number" step="1" placeholder="例：1200"></label>
+    <label>実質純増(枚/G)<br><input id="incNow" type="number" step="0.01" placeholder="例：2.5"></label>
+  </div>
+</div>
+
+<div class="card hidden" id="noneqArea">
+  <div class="h2row">
+    <div class="left">
+      <h2 style="margin:0">非等価条件</h2>
+      <div class="infoBtn" data-help="#h_noneq" title="非等価の説明">i</div>
+      <div class="infoBtn" data-help="#h_blur" title="ブレの説明">i</div>
+    </div>
+  </div>
+
+  <div class="row">
+    <label>貸出（枚/1,000円）<br><input id="lend" type="number" placeholder="例：50"></label>
+    <label>交換（枚/1,000円）<br><input id="rate" type="number" step="0.1" placeholder="例：52"></label>
+    <label>1k回転数<br><input id="rot1k" type="number" step="0.1" placeholder="例：33.5"></label>
+    <label>時速回転数（G/時）<br><input id="gph" type="number" step="1" placeholder="例：800"></label>
+    <label>持ちメダル枚数<br><input id="hold" type="number" placeholder="例：500"></label>
+</div>
+  <div id="gapView" class="hint"></div>
+</div>
+
+<div class="card" id="contCard">
+  <div class="h2row">
+    <div class="left">
+      <h2 style="margin:0">続行（連鎖）</h2>
+      <div class="infoBtn" data-help="#h_chain" title="連鎖の説明">i</div>
+      <div class="infoBtn" data-help="#h_onoff" title="ONの意味">i</div>
+    </div>
+    <button id="btnCalcCont" class="primary">続行込みで計算</button>
+  </div>
+
+  <div class="row">
+    <button id="btnAddContGroup">＋ 続行パターンを追加</button>
+  </div>
+
+  <div id="contGroups"></div>
+  <div id="psum" class="hint"></div>
+</div>
+
+<div class="card" id="resultCard">
+  <h2>結果</h2>
+
+  <div id="evRow" class="kpi">
+    <div class="line"><span class="label">総合期待値（等価）</span>：<span class="big" id="evTotal">-</span> 円</div>
+  </div>
+
+  <div class="kpi">
+    <div class="line"><span class="label">平均消化G</span>：<span class="big" id="gTotal">-</span> G</div>
+  </div>
+
+  <div id="rateView" class="kpi"></div>
+  <div id="flag" class="hint"></div>
+  <div id="calcLog" class="hint"></div>
+</div>
+
+<script>
+  // ===== utils =====
+
+  function n(v){ return Number(v)||0; }
+  function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+  // ===== password gate =====
+  const AUTH_KEY = "ev_ext_tool_auth_v1";
+  const AUTH_OK_VALUE = "ok";
+  // TODO: set password before release
+  const AUTH_PASSWORD = "kakucho";
+
+  // ===== basic anti-copy (light) =====
+  document.addEventListener("contextmenu", (e)=>{ e.preventDefault(); });
+
+  const gate = document.getElementById("gate");
+  const gatePw = document.getElementById("gatePw");
+  const gateBtn = document.getElementById("gateBtn");
+  const gateErr = document.getElementById("gateErr");
+
+  function showGate(){
+    gate.classList.remove("hidden");
+    gate.setAttribute("aria-hidden","false");
+    document.body.style.overflow = "hidden";
+    setTimeout(()=>gatePw && gatePw.focus(), 50);
+  }
+  function hideGate(){
+    gate.classList.add("hidden");
+    gate.setAttribute("aria-hidden","true");
+    document.body.style.overflow = "";
+  }
+  function checkAuth(){
+    try{
+      return localStorage.getItem(AUTH_KEY) === AUTH_OK_VALUE;
+    }catch(e){ return false; }
+  }
+  function setAuthOk(){
+    try{ localStorage.setItem(AUTH_KEY, AUTH_OK_VALUE); }catch(e){}
+  }
+  function tryUnlock(){
+    const pw = (gatePw.value||"").trim();
+    if(pw && pw === AUTH_PASSWORD){
+      setAuthOk();
+      gateErr.style.display = "none";
+      hideGate();
+    }else{
+      gateErr.style.display = "block";
+    }
+  }
+
+  gateBtn.addEventListener("click", tryUnlock);
+  gatePw.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ tryUnlock(); }});
+
+  if(!checkAuth()){
+    showGate();
+  }
+
+  function uid(){ return "id_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,8); }
+
+  function evPerG(mPct){
+    // 1Gあたりの期待値（円）
+    // 例：98.7% → 60 * (-0.013) = -0.78円/G
+    return 60 * ((mPct / 100) - 1);
+  }
+  function gFrom期待値(ev, mPct){
+    const v = evPerG(mPct);
+
+    // 100%ちょうどは1Gあたり0円なので逆算不可（0G扱い）
+    if(!isFinite(v) || Math.abs(v) < 1e-12) return 0;
+
+    const g = ev / v; // vがマイナスでもOK（期待値と符号が揃えばGはプラスになる）
+
+    // 実運用上、回すGはマイナスにならない想定
+    return Math.max(0, g);
+  }
+
+  function normalizedRate(raw){
+    // 交換（枚/1,000円）の入力ミス対策：
+    // - 「52」が通常（=1000円→52枚）
+    // - 以前の表記（枚/100円）に慣れて「5.2」と入れるケースを想定（×10）
+    if(!(raw>0)) return {rate:raw, corrected:false, msg:""};
+    if(raw>0 && raw<20){
+      return {rate:raw*10, corrected:true, msg:`交換（枚/1,000円）が「${raw}」になっています。通常は「52」のように入力します → 自動で ${raw*10} に補正しました。`};
+    }
+    // 逆に 520 のように桁が多い場合は ÷10
+    if(raw>=200 && raw<=2000){
+      return {rate:raw/10, corrected:true, msg:`交換（枚/1,000円）が「${raw}」になっています。通常は「52」のように入力します → 自動で ${raw/10} に補正しました。`};
+    }
+    return {rate:raw, corrected:false, msg:""};
+  }
+function bonusG_from_TY(ty, inc){
+    if(ty<=0 || inc<=0) return 0;
+    return ty / inc;
+  }
+
+  function expectedCashAndRemain(holdCoins, meanG, gmax, coinsPerG){
+    meanG = Math.max(1e-9, meanG);
+    gmax = Math.max(1, Math.floor(gmax||0));
+    coinsPerG = Math.max(0, coinsPerG);
+    holdCoins = Math.max(0, holdCoins);
+
+    let p = 1/meanG;
+    if(!isFinite(p) || p<=0) p = 0;
+    if(p>1) p = 1;
+
+    if(p===0){
+      const coinIn = gmax * coinsPerG;
+      return {
+        cashCoins: Math.max(0, coinIn - holdCoins),
+        remainCoins: Math.max(0, holdCoins - coinIn)
+      };
+    }
+
+    const q = 1 - p;
+    let cashExp = 0;
+    let remExp = 0;
+
+    let qpow = 1;
+    for(let g=1; g<=gmax-1; g++){
+      const prob = qpow * p;
+      const coinIn = g * coinsPerG;
+      cashExp += prob * Math.max(0, coinIn - holdCoins);
+      remExp  += prob * Math.max(0, holdCoins - coinIn);
+      qpow *= q;
+      if(qpow===0) break;
+    }
+
+    const probCeil = qpow;
+    if(probCeil>0){
+      const coinIn = gmax * coinsPerG;
+      cashExp += probCeil * Math.max(0, coinIn - holdCoins);
+      remExp  += probCeil * Math.max(0, holdCoins - coinIn);
+    }
+
+    return { cashCoins: cashExp, remainCoins: remExp };
+  }
+
+  // ===== storage multi slots =====
+  const STORAGE_KEY_MULTI = "slot_ev_tool_multi_v2_ui";
+  function loadStore(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY_MULTI);
+      if(!raw) return { slots: [], currentId: null };
+      const obj = JSON.parse(raw);
+      if(!obj || !Array.isArray(obj.slots)) return { slots: [], currentId: null };
+      return { slots: obj.slots, currentId: obj.currentId || null };
+    }catch(e){
+      return { slots: [], currentId: null };
+    }
+  }
+  function saveStore(store){ localStorage.setItem(STORAGE_KEY_MULTI, JSON.stringify(store)); }
+  function upsertSlot(slotId, name, data){
+    const store = loadStore();
+    const now = Date.now();
+    const idx = store.slots.findIndex(s=>s.id===slotId);
+    if(idx>=0){
+      store.slots[idx].name = name || store.slots[idx].name || "無名";
+      store.slots[idx].updatedAt = now;
+      store.slots[idx].data = data;
+    }else{
+      store.slots.push({ id: slotId, name: name || "無名", updatedAt: now, data });
+    }
+    store.currentId = slotId;
+    store.slots.sort((a,b)=>b.updatedAt-a.updatedAt);
+    saveStore(store);
+    return store;
+  }
+  function deleteSlot(slotId){
+    const store = loadStore();
+    store.slots = store.slots.filter(s=>s.id!==slotId);
+    if(store.currentId===slotId){
+      store.currentId = store.slots.length ? store.slots[0].id : null;
+    }
+    saveStore(store);
+    return store;
+  }
+  function deleteAllSlots(){
+    const store = { slots: [], currentId: null };
+    saveStore(store);
+    return store;
+  }
+  function getCurrentSlot(){
+    const store = loadStore();
+    if(!store.slots.length) return null;
+    const id = store.currentId || store.slots[0].id;
+    return store.slots.find(s=>s.id===id) || store.slots[0];
+  }
+
+  // ===== elements =====
+  const viewMode = document.getElementById("viewMode");
+  const spinMode = document.getElementById("spinMode");
+  const helpCard = null;
+  const mainNow = document.getElementById("mainNow");
+  const noneqArea = document.getElementById("noneqArea");
+  const contCard = document.getElementById("contCard");
+  const resultCard = document.getElementById("resultCard");
+  const calcTargetHint = document.getElementById("calcTargetHint");
+  const missingHint = document.getElementById("missingHint");
+
+  const evNow = document.getElementById("evNow");
+  const machineNow = document.getElementById("machineNow");
+  const hitRateNow = document.getElementById("hitRateNow");
+  const hitNow = document.getElementById("hitNow");
+  const spinNowManual = document.getElementById("spinNowManual");
+  const tyNow = document.getElementById("tyNow");
+  const incNow = document.getElementById("incNow");
+  const hitNowWrap = document.getElementById("hitNowWrap");
+  const manualNowWrap = document.getElementById("manualNowWrap");
+  const tyAreaNow = document.getElementById("tyAreaNow");
+
+  const lend = document.getElementById("lend");
+  const rate = document.getElementById("rate");
+  const rot1k = document.getElementById("rot1k");
+  const gph = document.getElementById("gph");
+  const hold = document.getElementById("hold");
+  const gapView = document.getElementById("gapView");
+
+  const contGroups = document.getElementById("contGroups");
+  const psum = document.getElementById("psum");
+
+  const evTotalEl = document.getElementById("evTotal");
+  const gTotalEl  = document.getElementById("gTotal");
+  const rateView  = document.getElementById("rateView");
+  const flagEl    = document.getElementById("flag");
+  const calcLogEl = document.getElementById("calcLog");
+  const evRow     = document.getElementById("evRow");
+
+  // slot UI
+  const slotSelect = document.getElementById("slotSelect");
+  const slotName   = document.getElementById("slotName");
+
+  // ===== UI helpers =====
+  function updateGapView(){
+    const L = n(lend.value), rawR = n(rate.value), K = n(rot1k.value);
+    const nr = normalizedRate(rawR);
+    const R = nr.rate;
+    if(L<=0 || R<=0 || K<=0){
+      gapView.textContent = "※貸出/交換率/1k回転数を入力してください";
+      return;
+    }
+    const buy = 1000/L;
+    const cash = 1000/R;
+    const back = L*cash;
+    const gap = 1000-back;
+    const coinsPerG = L/K;
+    const rateNote = nr.corrected ? `
+※${nr.msg}` : "";
+    gapView.innerHTML =
+      `購入単価：${buy.toFixed(3)}円/枚 ／ 換金単価：${cash.toFixed(3)}円/枚 ／ ` +
+      `1,000円あたり目減り：約${Math.round(gap).toLocaleString()}円（戻り約${Math.round(back).toLocaleString()}円）
+` +
+      `投資推定：1Gあたり${coinsPerG.toFixed(3)}枚${rateNote}`;
+  }
+
+  function refreshUI(){
+    const vm = viewMode.value;
+    const isNoneq = (vm === "nonequal");
+    // help view was removed; keep logic simple
+    const isHelp = false;
+
+    // show/hide non-eq inputs
+    noneqArea.classList.toggle("hidden", !isNoneq);
+
+    // For non-eq mode, hide the "期待値(円) / 機械割(%)" pair row if needed
+    evRow.style.display = isNoneq ? "none" : "";
+
+    if(isNoneq) updateGapView();
+    else gapView.textContent = "";
+
+    const sm = spinMode.value;
+    hitNowWrap.classList.toggle("hidden", sm!=="hit");
+    manualNowWrap.classList.toggle("hidden", sm!=="manual");
+    tyAreaNow.classList.toggle("hidden", sm!=="hit");
+
+    document.querySelectorAll(".tyCols").forEach(e=>{
+      e.style.display = (sm==="hit") ? "" : "none";
+    });
+  }
+
+
+  function goHelp(anchor){
+    // Open the top "使い方" details and scroll to the requested section.
+    const howto = document.getElementById("howto");
+    if(howto) howto.open = true;
+    setTimeout(()=>{
+      const el = document.querySelector(anchor);
+      if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+    }, 30);
+  }
+
+  document.querySelectorAll(".infoBtn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const a = btn.getAttribute("data-help");
+      if(a) goHelp(a);
+    });
+  });
+
+
+  // ===== cont groups =====
+  const contGroupState = { groups: [], counter: 0 };
+
+  // columns: hit, hitRate, p, ev, m, ty, inc
+  function addContRow(tbody, hit="", hitRate="100", p="", ev="", m="", ty="", inc=""){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><input type="number" step="0.1" value="${hit}" placeholder="1/x"></td>
+      <td><input type="number" step="0.1" value="${hitRate}" placeholder="100"></td>
+      <td><input type="number" step="0.1" value="${p}" placeholder="%"></td>
+      <td class="col-wide"><input type="number" value="${ev}" placeholder="期待値"></td>
+      <td><input type="number" step="0.01" value="${m}" placeholder="機械割"></td>
+      <td class="tyCols"><input type="number" step="1" value="${ty}" placeholder="平均獲得枚数(TY)"></td>
+      <td class="tyCols"><input type="number" step="0.01" value="${inc}" placeholder="実質純増"></td>
+      <td><button onclick="this.closest('tr').remove();">削除</button></td>
+    `;
+    tbody.appendChild(tr);
+    refreshUI();
+  }
+
+  function addContGroup(fromData=null){
+    contGroupState.counter += 1;
+    const id = "cg_" + contGroupState.counter;
+    const idx = contGroupState.counter;
+
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+    wrap.style.boxShadow = "none";
+    wrap.style.border = "1px solid #eee";
+    wrap.style.marginBottom = "10px";
+
+    wrap.innerHTML = `
+      <div class="groupHeader">
+        <div class="left" style="align-items:flex-start;">
+          <label class="mini" style="display:flex;gap:8px;align-items:center;">
+            <input type="checkbox" id="${id}_on">
+            <b>続行${idx}</b>
+          </label>
+          <span class="pill" id="${id}_sum">条件付き：0.00% / 実効到達：0.000%</span>
+        </div>
+
+        <div class="left">
+          <button id="${id}_add">＋ 行追加</button>
+          <button id="${id}_del" class="dangerBtn">削除</button>
+        </div>
+      </div>
+
+      <div class="twoCol">
+        <label>名前（自由）<br><input id="${id}_name" type="text" placeholder="例：天国スルー2回目"></label>
+        <label>メモ（保存されます）<br><input id="${id}_memo" type="text" placeholder="例：想定 / 回数帯 / 注意"></label>
+      </div>
+
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>初当たり確率(1/◯◯)</th>
+              <th>当選率(%)</th>
+              <th>確率(%)</th>
+              <th>期待値(円)</th>
+              <th>機械割(%)</th>
+              <th class="tyCols">平均獲得枚数(TY)(枚)</th>
+              <th class="tyCols">実質純増(枚/G)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="${id}_tbody"></tbody>
+        </table>
+      </div>
+    `;
+
+    contGroups.appendChild(wrap);
+
+    const onCheck = wrap.querySelector(`#${id}_on`);
+    const nameInput = wrap.querySelector(`#${id}_name`);
+    const memoInput = wrap.querySelector(`#${id}_memo`);
+    const tbody = wrap.querySelector(`#${id}_tbody`);
+    const sumEl = wrap.querySelector(`#${id}_sum`);
+
+    wrap.querySelector(`#${id}_add`).onclick = ()=> addContRow(tbody);
+    wrap.querySelector(`#${id}_del`).onclick = ()=>{
+      const i = contGroupState.groups.findIndex(g=>g.id===id);
+      if(i>=0) contGroupState.groups.splice(i,1);
+      wrap.remove();
+      refreshUI();
+      updateContSumsAndReachPreview();
+    };
+
+    wrap.addEventListener("input", ()=> updateContSumsAndReachPreview());
+    onCheck.addEventListener("change", ()=> updateContSumsAndReachPreview());
+
+    if(fromData){
+      onCheck.checked = !!fromData.on;
+      nameInput.value = fromData.name || "";
+      memoInput.value = fromData.memo || "";
+      (fromData.rows||[]).forEach(r=>{
+        addContRow(tbody, r.hit, r.hitRate ?? "100", r.p, r.ev, r.m, r.ty, r.inc);
+      });
+      if((fromData.rows||[]).length===0) addContRow(tbody);
+    }else{
+      addContRow(tbody);
+    }
+
+    contGroupState.groups.push({ id, idx, nameInput, memoInput, onCheck, tbody, sumEl });
+    refreshUI();
+    updateContSumsAndReachPreview();
+  }
+
+  function updateContSumsAndReachPreview(){
+    let reach = clamp01(n(hitRateNow.value)/100);
+    let chainStarted = false;
+    const groups = [...contGroupState.groups].sort((a,b)=>a.idx-b.idx);
+
+    groups.forEach((g)=>{
+      let sumEff=0;
+      g.tbody.querySelectorAll("tr").forEach(tr=>{
+        const hr = clamp01(n(tr.children[1].firstChild.value)/100);
+        const p  = n(tr.children[2].firstChild.value)/100;
+        sumEff += (p*hr);
+      });
+
+      let reachThis = 0;
+      if(g.onCheck.checked){
+        chainStarted = true;
+        reachThis = reach * sumEff;
+        reach = reachThis;
+      }else{
+        if(chainStarted) reach = 0;
+      }
+
+      g.sumEl.textContent = `条件付き：${(sumEff*100).toFixed(2)}% / 実効到達：${(reachThis*100).toFixed(3)}%`;
+    });
+  }
+
+  // ===== serialize/apply =====
+  function serialize(){
+    return {
+      viewMode: viewMode.value,
+      spinMode: spinMode.value,
+      now: {
+        evNow: evNow.value,
+        machineNow: machineNow.value,
+        hitRateNow: hitRateNow.value,
+        hitNow: hitNow.value,
+        spinNowManual: spinNowManual.value,
+        tyNow: tyNow.value,
+        incNow: incNow.value,
+      },
+      noneq: {
+        lend: lend.value,
+        rate: rate.value,
+        rot1k: rot1k.value,
+        hold: hold.value,      },
+      cont: contGroupState.groups
+        .sort((a,b)=>a.idx-b.idx)
+        .map(g=>{
+          const rows = [];
+          g.tbody.querySelectorAll("tr").forEach(tr=>{
+            rows.push({
+              hit: tr.children[0].firstChild.value,
+              hitRate: tr.children[1].firstChild.value,
+              p: tr.children[2].firstChild.value,
+              ev: tr.children[3].firstChild.value,
+              m: tr.children[4].firstChild.value,
+              ty: tr.children[5].firstChild?.value ?? "",
+              inc: tr.children[6].firstChild?.value ?? ""
+            });
+          });
+          return { on: g.onCheck.checked, name: g.nameInput.value, memo: g.memoInput.value, rows };
+        })
+    };
+  }
+
+  function applyData(data){
+    if(!data) return;
+
+    viewMode.value = data.viewMode || "equal";
+    spinMode.value = data.spinMode || "machine";
+
+    const now = data.now || {};
+    evNow.value = now.evNow ?? "";
+    machineNow.value = now.machineNow ?? "";
+    hitRateNow.value = (now.hitRateNow ?? "100");
+    hitNow.value = now.hitNow ?? "";
+    spinNowManual.value = now.spinNowManual ?? "";
+    tyNow.value = now.tyNow ?? "";
+    incNow.value = now.incNow ?? "";
+
+    const ne = data.noneq || {};
+    lend.value = ne.lend ?? "";
+    rate.value = ne.rate ?? "";
+    rot1k.value = ne.rot1k ?? "";
+    hold.value = ne.hold ?? "";
+    contGroups.innerHTML = "";
+    contGroupState.groups = [];
+    contGroupState.counter = 0;
+
+    const cont = Array.isArray(data.cont) ? data.cont : [];
+    if(cont.length===0) addContGroup();
+    else cont.forEach(c=> addContGroup(c));
+
+    clearMissingMarks();
+    refreshUI();
+    updateContSumsAndReachPreview();
+  }
+
+  // ===== required validation =====
+  const requiredMap = [
+    { el: evNow,       name:"当該期待値" },
+    { el: machineNow,  name:"当該機械割" },
+    { el: hitRateNow,  name:"当該当選率" },
+  ];
+  const requiredNoneq = [
+    { el: lend,      name:"貸出" },
+    { el: rate,      name:"交換率" },
+    { el: rot1k,     name:"1k回転" },
+    { el: hold,      name:"持ちメダル" },  ];
+
+  function clearMissingMarks(){
+    document.querySelectorAll(".req-miss").forEach(x=>x.classList.remove("req-miss"));
+    missingHint.textContent = "";
+  }
+
+  function validateRequired(){
+    clearMissingMarks();
+    const miss = [];
+
+    requiredMap.forEach(r=>{
+      if(String(r.el.value).trim()===""){
+        miss.push(r);
+      }
+    });
+
+    // spinMode=hit の場合、hitNowは実質必須（使うなら）
+    if(spinMode.value==="hit" && String(hitNow.value).trim()===""){
+      miss.push({ el: hitNow, name:"当該 初当たり確率(1/◯◯)" });
+    }
+    if(spinMode.value==="manual" && String(spinNowManual.value).trim()===""){
+      miss.push({ el: spinNowManual, name:"当該 手動回転数" });
+    }
+    // 平均獲得枚数(TY)/実質純増は任意（空でもOK）
+
+    if(viewMode.value==="nonequal"){
+      requiredNoneq.forEach(r=>{
+        if(String(r.el.value).trim()===""){
+          miss.push(r);
+        }
+      });
+    }
+
+    // mark
+    miss.forEach(m=>m.el.classList.add("req-miss"));
+
+    if(miss.length){
+      missingHint.textContent = "未入力：" + miss.map(x=>x.name).join(" / ");
+      // scroll to first missing in main view
+      const first = miss[0].el;
+      first.scrollIntoView({behavior:"smooth", block:"center"});
+      first.focus({preventScroll:true});
+      return false;
+    }
+    return true;
+  }
+
+  // ===== calc =====
+  function getNowSpinG(){
+    const evY = n(evNow.value);
+    const mPct = n(machineNow.value);
+
+    let spinG = 0;
+    if(spinMode.value==="hit") spinG = n(hitNow.value);
+    else if(spinMode.value==="manual") spinG = n(spinNowManual.value);
+    else spinG = gFrom期待値(evY, mPct);
+
+    const bonusG = (spinMode.value==="hit")
+      ? bonusG_from_TY(n(tyNow.value), n(incNow.value))
+      : 0;
+
+    return { spinG, bonusG, totalG: spinG + bonusG };
+  }
+
+  function calcContChained(){
+    const groups = [...contGroupState.groups].sort((a,b)=>a.idx-b.idx);
+
+    let evAdd=0, gAdd=0;
+    let invalid=false;
+    let warnings = [];
+
+    const used = [];
+    const chainInfo = [];
+
+    let reach = clamp01(n(hitRateNow.value)/100); // 当該当選率が入口
+    let chainActive = false;
+
+    for(let i=0; i<groups.length; i++){
+      const g = groups[i];
+      if(!g.onCheck.checked){
+        if(chainActive){
+          for(let j=i+1; j<groups.length; j++){
+            if(groups[j].onCheck.checked){
+              warnings.push(`続行${groups[j].idx}がONですが、続行${g.idx}がOFFのため無視されます`);
+            }
+          }
+          break;
+        }
+        continue;
+      }
+
+      chainActive = true;
+      const nm = (g.nameInput.value || `続行${g.idx}`).trim();
+      used.push(nm);
+
+      let condEff = 0;
+      const reachBefore = reach;
+
+      g.tbody.querySelectorAll("tr").forEach(tr=>{
+        const hit = n(tr.children[0].firstChild.value);
+        const hr  = clamp01(n(tr.children[1].firstChild.value)/100);
+        const p   = n(tr.children[2].firstChild.value)/100;
+        const ev  = n(tr.children[3].firstChild.value);
+        const m   = n(tr.children[4].firstChild.value);
+
+        let spinG = 0;
+        if(hit>0) spinG = hit;
+        else { spinG = gFrom期待値(ev, m); invalid = true; }
+
+        let bonusG = 0;
+        if(spinMode.value==="hit"){
+          const ty = n(tr.children[5].firstChild.value);
+          const inc = n(tr.children[6].firstChild.value);
+          bonusG = bonusG_from_TY(ty, inc);
+        }
+
+        const wCond = p * hr;
+        const w = reachBefore * wCond;
+
+        condEff += wCond;
+
+        evAdd += w * ev;
+        gAdd  += w * (spinG + bonusG);
+      });
+
+      const reachAfter = reachBefore * condEff;
+      chainInfo.push({name:nm, condEff, reachAfter});
+      reach = reachAfter;
+
+      if(reach < 1e-12) break;
+    }
+
+    if(used.length){
+      const lines = chainInfo.map((x, k)=>{
+        const idx = k+1;
+        return `続行${idx}(${x.name}) 条件付き=${(x.condEff*100).toFixed(2)}% / 実効到達=${(x.reachAfter*100).toFixed(3)}%`;
+      });
+      psum.textContent = lines.join("\n");
+    }else{
+      psum.textContent = "";
+    }
+
+    return { evAdd, gAdd, invalid, warnings, used };
+  }
+
+  function buildCalcLog(targetLabel, used){
+    const vm = viewMode.value==="nonequal" ? "非等価" : (viewMode.value==="equal" ? "等価" : "使い方");
+    const sm = spinMode.value==="machine" ? "期待値+機械割" : (spinMode.value==="hit" ? "初当たり確率(1/◯◯)" : "手動回転数");
+    const hr = clamp01(n(hitRateNow.value)/100);
+    const chain = (used && used.length) ? `続行：${used.join(" → ")}` : "続行：なし";
+    const approx = (viewMode.value==="nonequal") ? "非等価：近似ON（天井打ち切り）" : "";
+    return `計算対象：${targetLabel} / モード：${vm} / 算出：${sm} / 当選率：${(hr*100).toFixed(1)}% / ${chain}${approx? " / "+approx:""}`;
+  }
+
+  function calcCore(targetLabel){
+    refreshUI();
+    if(viewMode.value==="help") return;
+
+    // validate required before calc
+    if(!validateRequired()){
+      calcTargetHint.textContent = "未計算（未入力あり）";
+      return;
+    }
+
+    updateContSumsAndReachPreview();
+
+    let warn = [];
+    const hrNow = clamp01(n(hitRateNow.value)/100);
+    const evNowY = n(evNow.value);
+    const nowG = getNowSpinG();
+
+    let evTotal = evNowY * hrNow;
+    let gTotal  = nowG.totalG * hrNow;
+
+    const cont = calcContChained();
+    evTotal += cont.evAdd;
+    gTotal  += cont.gAdd;
+
+    if(cont.invalid) warn.push("続行に初当たり確率(1/◯◯)未入力行があり、Gがブレやすいです");
+    cont.warnings.forEach(w=>warn.push(w));
+
+    const evG = (gTotal>0) ? (evTotal/gTotal) : 0;
+    const mEff = (1 + evG/60) * 100;
+
+    evTotalEl.textContent = isFinite(evTotal) ? Math.round(evTotal).toLocaleString() : "-";
+    gTotalEl.textContent  = isFinite(gTotal) ? Math.round(gTotal).toLocaleString() : "-";
+
+    flagEl.textContent = warn.join(" / ");
+    flagEl.className = "hint " + (warn.length ? "warn" : "");
+
+    calcTargetHint.textContent = `計算済：${targetLabel}`;
+    rateView.innerHTML = "";
+    calcLogEl.textContent = buildCalcLog(targetLabel, cont.used);
+
+    if(viewMode.value!=="nonequal"){
+      rateView.innerHTML = `
+        <div class="line"><span class="label">機械割</span>：<span class="big">${isFinite(mEff)?mEff.toFixed(2):"-"}%</span></div>
+      `;
+      return;
+    }
+
+        // non-eq（目安）
+    const L = n(lend.value), rawR = n(rate.value), K = n(rot1k.value), H0 = n(hold.value);
+    const nr = normalizedRate(rawR);
+    const R = nr.rate;
+    const H = Math.max(0, H0);
+
+    if(L<=0 || R<=0 || K<=0 || gTotal<=0){
+      rateView.innerHTML = `
+        <div class="line"><span class="label">時給（非等価）</span>：<span class="big">-</span></div>
+      `;
+      return;
+    }
+
+    const coinValue = 1000 / R;      // 換金単価（円/枚）
+    const coinCostCash = 1000 / L;  // 購入単価（円/枚）
+    const gapPerCoin = Math.max(0, coinCostCash - coinValue);
+
+    // 投資ギャップ（目安）：当該の「初当たりまで」だけ現金投資になる想定（持ちメダル優先）。
+    // ※当選分布・出玉分布は未入力のため、現金投資が絡む部分は目安です。
+    const meanG_first = Math.max(0, nowG.spinG);
+    const coinsToFirst = (K>0) ? (meanG_first / K) * L : 3*meanG_first;
+
+    // 当選率が100%でない場合、投資も期待値としてスケール
+    const coinsToFirstExp = coinsToFirst * hrNow;
+
+    const holdUse = Math.min(H, coinsToFirstExp);
+    const cashCoins = Math.max(0, coinsToFirstExp - holdUse);
+    const extraGapYen = cashCoins * gapPerCoin;
+
+    // 回収側：等価期待値→枚数→換金価値
+    const profitCoinsEq = evTotal / 20;
+    const profitYenByExchange = profitCoinsEq * coinValue;
+    const recoveryGapYen = profitYenByExchange - evTotal; // だいたいマイナス（回収目減り）
+
+    // 投資側ギャップ（マイナス）
+    const investGapYen = - extraGapYen;
+
+    // 非等価期待値（円）＝等価期待値 + 回収ギャップ + 投資ギャップ
+    const evNoneq = evTotal + recoveryGapYen + investGapYen;
+
+    const spd = n(gph.value);
+    const wage = (spd>0 && gTotal>0) ? (evNoneq / (gTotal/spd)) : NaN;
+
+    // “円ベース機械割”（参考）
+    const inCoinsTot = 3 * gTotal;
+    const outCoinsTot = inCoinsTot * (mEff/100);
+    const investYen = inCoinsTot*coinValue + extraGapYen;
+    const returnYen = outCoinsTot*coinValue;
+    const mNoneq = (investYen>0) ? (returnYen/investYen*100) : mEff;
+
+    const rateNote = nr.corrected ? `<div class="hint warn">${nr.msg}</div>` : "";
+
+    rateView.innerHTML = `
+      <div class="line"><span class="label">期待値（非等価）</span>：<span class="big">${isFinite(evNoneq)?Math.round(evNoneq).toLocaleString():"-"}円</span></div>
+      <div class="line"><span class="label">時給（非等価）</span>：<span class="big">${isFinite(wage)?Math.round(wage).toLocaleString():"-"}円</span></div>
+      <div class="hint">
+        換金単価：${coinValue.toFixed(3)}円/枚 ／ 購入単価：${coinCostCash.toFixed(3)}円/枚 ／ ギャップ：${gapPerCoin.toFixed(3)}円/枚<br>
+        初当たりまで投資（目安）：${(coinsToFirstExp).toFixed(1)}枚（持ち使用${holdUse.toFixed(1)}枚／現金${cashCoins.toFixed(1)}枚）
+        <br>投資ギャップ：${Math.round(investGapYen).toLocaleString()}円 ／ 回収ギャップ：${Math.round(recoveryGapYen).toLocaleString()}円
+      </div>
+      ${rateNote}
+      <div class="hint warn">※当選分布・出玉分布は未入力のため、現金投資が絡む部分は目安です。持ちメダル比率が高いほど現金ギャップは小さくなります。</div>
+      <div class="hint warn">※実戦では、表示されている機械割より1〜2％低く見積もって判断すると体感値に近くなることが多いです。</div>
+    `;
+
+  }
+
+  // ===== save/load UI =====
+  function renderSlotList(store){
+    slotSelect.innerHTML = "";
+    if(!store.slots.length){
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "（保存なし）";
+      slotSelect.appendChild(opt);
+      slotSelect.value = "";
+      slotName.value = "";
+      return;
+    }
+
+    store.slots.forEach(s=>{
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      const dt = new Date(s.updatedAt||0);
+      const stamp = isFinite(dt.getTime()) ? `${dt.getMonth()+1}/${dt.getDate()} ${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}` : "";
+      opt.textContent = `${s.name || "無名"}  (${stamp})`;
+      slotSelect.appendChild(opt);
+    });
+
+    const cur = store.currentId || store.slots[0].id;
+    slotSelect.value = cur;
+    const curSlot = store.slots.find(s=>s.id===cur) || store.slots[0];
+    slotName.value = curSlot.name || "";
+  }
+
+  function syncCurrentIdToStore(selectedId){
+    const store = loadStore();
+    if(store.slots.find(s=>s.id===selectedId)){
+      store.currentId = selectedId;
+      saveStore(store);
+      renderSlotList(store);
+    }
+  }
+
+  // ===== buttons =====
+  document.getElementById("btnCalcAll").onclick = ()=> calcCore("全体（当該＋続行）");
+  document.getElementById("btnCalcNow").onclick = ()=>{
+    // 当該のみ計算：続行を一時OFF
+    const old = contGroupState.groups.map(g=>g.onCheck.checked);
+    contGroupState.groups.forEach(g=>g.onCheck.checked=false);
+    updateContSumsAndReachPreview();
+    calcCore("当該のみ");
+    contGroupState.groups.forEach((g,i)=>g.onCheck.checked=old[i]);
+    updateContSumsAndReachPreview();
+  };
+  document.getElementById("btnCalcCont").onclick = ()=> calcCore("当該＋続行（ON連鎖）");
+
+  document.getElementById("btnAddContGroup").onclick = ()=> addContGroup();
+
+  document.getElementById("btnClear").onclick = ()=>{
+    [evNow, machineNow, hitNow, spinNowManual, tyNow, incNow].forEach(el=>el.value="");
+    hitRateNow.value = "100";
+    [lend, rate, rot1k, hold].forEach(el=>el.value="");
+
+    contGroups.innerHTML = "";
+    contGroupState.groups = [];
+    contGroupState.counter = 0;
+    addContGroup();
+
+    evTotalEl.textContent="-";
+    gTotalEl.textContent="-";
+    rateView.innerHTML="";
+    flagEl.textContent="";
+    calcLogEl.textContent="";
+    calcTargetHint.textContent="未計算";
+    psum.textContent="";
+    clearMissingMarks();
+    refreshUI();
+  };
+
+  document.getElementById("btnSave").onclick = ()=>{
+    const store = loadStore();
+    const id = slotSelect.value || (store.currentId || (store.slots[0]?.id ?? null));
+    if(!id){
+      calcTargetHint.textContent = "保存先がありません（別名で保存を使用）";
+      return;
+    }
+    const name = (slotName.value || "無名").trim();
+    const data = serialize();
+    const next = upsertSlot(id, name, data);
+    renderSlotList(next);
+    calcTargetHint.textContent = `保存しました（${name}）`;
+  };
+
+  document.getElementById("btnSaveAs").onclick = ()=>{
+    const id = uid();
+    const name = (slotName.value || "無名").trim();
+    const data = serialize();
+    const next = upsertSlot(id, name, data);
+    renderSlotList(next);
+    calcTargetHint.textContent = `新規保存しました（${name}）`;
+  };
+
+  document.getElementById("btnLoad").onclick = ()=>{
+    const store = loadStore();
+    const id = slotSelect.value;
+    const slot = store.slots.find(s=>s.id===id);
+    if(!slot){
+      calcTargetHint.textContent = "読込できるスロットがありません";
+      return;
+    }
+    store.currentId = id;
+    saveStore(store);
+    applyData(slot.data);
+    slotName.value = slot.name || "";
+    renderSlotList(store);
+    calcTargetHint.textContent = `読込しました（${slot.name||"無名"}）`;
+  };
+
+  document.getElementById("btnDeleteSlot").onclick = ()=>{
+    const id = slotSelect.value;
+    if(!id){ calcTargetHint.textContent = "削除できるスロットがありません"; return; }
+    if(!confirm("このスロットを削除します。よろしいですか？")) return;
+    const next = deleteSlot(id);
+    renderSlotList(next);
+    calcTargetHint.textContent = "スロットを削除しました";
+  };
+
+  document.getElementById("btnDeleteAll").onclick = ()=>{
+    if(!confirm("全スロットを削除します。よろしいですか？")) return;
+    const next = deleteAllSlots();
+    renderSlotList(next);
+    calcTargetHint.textContent = "全スロットを削除しました";
+  };
+
+  slotSelect.onchange = ()=>{
+    const id = slotSelect.value;
+    syncCurrentIdToStore(id);
+    const store = loadStore();
+    const slot = store.slots.find(s=>s.id===id);
+    slotName.value = slot?.name || "";
+  };
+
+  // auto clear miss marks when typing
+  document.addEventListener("input", (e)=>{
+    if(e.target && e.target.classList && e.target.classList.contains("req-miss")){
+      e.target.classList.remove("req-miss");
+      // rebuild missing hint quickly
+      const any = document.querySelector(".req-miss");
+      if(!any) missingHint.textContent = "";
+    }
+  });
+
+  viewMode.onchange = ()=>{ refreshUI(); clearMissingMarks(); };
+  spinMode.onchange = ()=>{ refreshUI(); clearMissingMarks(); };
+
+  [lend, rate, rot1k].forEach(el=>{
+    el.addEventListener("input", ()=>{ if(viewMode.value==="nonequal") updateGapView(); });
+  });
+  hitRateNow.addEventListener("input", ()=> updateContSumsAndReachPreview());
+
+  // ===== init =====
+  addContGroup();
+  refreshUI();
+
+  (function initSlots(){
+    const store = loadStore();
+    if(!store.slots.length){
+      const id = uid();
+      const data = serialize();
+      const next = upsertSlot(id, "デフォルト", data);
+      renderSlotList(next);
+    }else{
+      renderSlotList(store);
+      const cur = getCurrentSlot();
+      if(cur){
+        applyData(cur.data);
+      }
+    }
+  })();
+</script>
+</body>
+</html>
