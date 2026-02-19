@@ -2175,12 +2175,29 @@
       function normalizePresetModel(presetObj) {
         // Always start from DEFAULT_DATA to keep built-in templates intact.
         const base = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        const types = ["modeDist", "ptDist", "hitRate", "cycleDist", "modeTrans"];
 
+        // 1. Merge LocalStorage tables (preserve user's custom tables not in preset)
+        const saved = loadAllTables();
+        types.forEach(t => {
+          if (!saved[t]) return;
+          base[t] = base[t] || {};
+          Object.keys(saved[t]).forEach(k => {
+            // Don't overwrite built-ins (DEFAULT_DATA) with local storage
+            if (!Object.prototype.hasOwnProperty.call(base[t], k)) {
+              base[t][k] = saved[t][k];
+            }
+          });
+        });
+
+        // 2. Merge Preset tables (overwrite/add from preset)
         if (presetObj && typeof presetObj === "object") {
-          // tables
-          const types = ["modeDist", "ptDist", "hitRate", "cycleDist", "modeTrans"];
           types.forEach(t => {
-            if (presetObj[t]) base[t] = presetObj[t];
+            if (presetObj[t]) {
+              base[t] = base[t] || {};
+              // Preset should win if there's a conflict, effectively restoring the state at snapshot
+              Object.assign(base[t], presetObj[t]);
+            }
           });
 
           // backward compatibility
