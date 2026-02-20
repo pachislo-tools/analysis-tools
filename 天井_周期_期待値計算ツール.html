@@ -2250,14 +2250,21 @@
         }
         return base;
       }
-      function refreshPresetSelect() {
+      function refreshPresetSelect(preferName) {
         const sel = document.getElementById("presetSelect");
         if (!sel) return;
+        const currentVal = sel.value;
         const presets = loadAllPresets();
         const keys = Object.keys(presets).sort((a, b) => a.localeCompare(b, 'ja'));
         sel.innerHTML = "";
         const opt0 = document.createElement("option"); opt0.value = ""; opt0.textContent = "—選択—"; sel.appendChild(opt0);
         keys.forEach(k => { const o = document.createElement("option"); o.value = k; o.textContent = k; sel.appendChild(o); });
+
+        if (preferName && keys.includes(preferName)) {
+          sel.value = preferName;
+        } else if (currentVal && keys.includes(currentVal)) {
+          sel.value = currentVal;
+        }
       }
       function msg(el, text) { if (!el) return; el.textContent = text; clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = ""; }, 3500); }
       refreshPresetSelect();
@@ -2309,7 +2316,7 @@
         if (!name) return msg(document.getElementById("presetMsg"), "プリセット名を入れてね");
         if (!confirm(`「${name}」に本当に保存（上書き）しますか？`)) return;
         snapshotUIToModel();
-        const presets = loadAllPresets(); presets[name] = JSON.parse(JSON.stringify(dataModel)); saveAllPresets(presets); refreshPresetSelect();
+        const presets = loadAllPresets(); presets[name] = JSON.parse(JSON.stringify(dataModel)); saveAllPresets(presets); refreshPresetSelect(name);
         msg(document.getElementById("presetMsg"), `保存しました：${name}`);
       });
       document.getElementById("loadPreset")?.addEventListener("click", () => {
@@ -2650,12 +2657,12 @@
             const mode = A[i][0];
             const p = parsePercent(A[i][1]);
             if (!mode || p == null) continue;
-            if (/モード|割合|振り分け/.test(mode)) continue;
+            if (/^(モード|モード名|割合|振り分け)$/.test(mode)) continue;
             dist[mode] = p;
           }
           if (Object.keys(dist).length === 0) return "反映できませんでした（モード名/割合列を確認してね）";
           dataModel.modeDist[ctxName] = dist;
-          updateJsonView(); refreshCalcSelectors(); persistTables(); refreshContextSelect();
+          updateJsonView(); refreshCalcSelectors({ modeDist: ctxName }); persistTables(); refreshContextSelect();
           return `モード（初期分布）として反映：${ctxName}`;
         }
 
@@ -2681,7 +2688,7 @@
           }
           dataModel.modeTrans = dataModel.modeTrans || {};
           dataModel.modeTrans[ctxName] = { fromModes, toModes, matrix };
-          updateJsonView(); refreshCalcSelectors(); persistTables(); refreshContextSelect();
+          updateJsonView(); refreshCalcSelectors({ modeTrans: ctxName }); persistTables(); refreshContextSelect();
           return `モード移行率として反映：${ctxName}`;
         }
 
@@ -2750,7 +2757,7 @@
           }
 
           dataModel.ptDist[ctxName] = out;
-          updateJsonView(); refreshCalcSelectors(); persistTables(); refreshContextSelect();
+          updateJsonView(); refreshCalcSelectors({ ptDist: ctxName }); persistTables(); refreshContextSelect();
           return `周期pt分布として反映：${ctxName} (${count}件)`;
         }
       }
@@ -3676,9 +3683,11 @@
         if (tenjoMode === "game" && useGameCeil && fail != null && isFinite(fail)) {
           // 内部推定：1回のCZ（=当たり機会）までの平均G（打ち出し状態で計算）
           const avgGperAttempt0 = (totalHitProb > 0) ? (totalGamesAll / totalHitProb) : 0;
-          const denom = (avgGperAttempt0 > 0) ? avgGperAttempt0 : 250; // フォールバック
+          // [FIX] denomが極端に小さいとKが無限大になり計算が爆発するため、下限を設ける
+          const denom = Math.max(10, (avgGperAttempt0 > 0) ? avgGperAttempt0 : 250);
           const remainG = Math.max(0, ceilG - nowG);
-          const K = Math.max(0, Math.ceil(remainG / denom));
+          // [FIX] Kも最大100回程度に制限（現実的に100連続CZスルーはあり得ず、処理落ちを防ぐため）
+          const K = Math.min(100, Math.max(0, Math.ceil(remainG / denom)));
 
           // UIに反映（存在する場合のみ）
           const kEl = document.getElementById("ceilK");
