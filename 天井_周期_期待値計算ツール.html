@@ -2388,18 +2388,28 @@
           return [[""]];
         }
         if (type === "ptDist") {
-          // ptDist[ctxName][mode]=[{range,min,max,p}]
-          const pd = (dataModel.ptDist || {})[ctxName];
-          if (!pd) return [[""]];
+          const pd = (dataModel.ptDist || {})[ctxName] || {};
           const modes = Object.keys(pd);
-          // flatten as: mode | range | p
-          const out = [["モード", "規定pt（例:64-128）", "割合"]];
-          modes.forEach(m => {
-            (pd[m] || []).forEach(row => {
-              out.push([m, row.range || (`${row.min}-${row.max}`), fmtPct(row.p || 0)]);
-            });
+          if (modes.length === 0) return [[""]];
+          
+          const points = Array.from(new Set(modes.flatMap(m => (pd[m] || []).map(x => x.range || (x.min + "pt")))));
+          // 数値順ソート（簡易）
+          points.sort((a, b) => {
+             const na = parseInt(a) || 0;
+             const nb = parseInt(b) || 0;
+             return na - nb;
           });
-          return out;
+
+          const grid = [["ポイント", ...modes]];
+          for (const p of points) {
+            const row = [p];
+            for (const mode of modes) {
+              const item = (pd[mode] || []).find(x => (x.range || ((x.min || 0) + "pt")) === p);
+              row.push(item ? Math.round(item.p * 100) + "%" : "-");
+            }
+            grid.push(row);
+          }
+          return grid;
         }
         if (type === "modeTrans") {
           const mt = (dataModel.modeTrans || {})[ctxName];
@@ -2897,8 +2907,10 @@
             "junzo": 2.5,
             "directDenom": 0
           }
-        }
-      };
+        },
+
+  
+  };
 
       function initMachineTplSelect() {
         const sel = document.getElementById("selMachineTpl");
