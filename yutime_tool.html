@@ -1,0 +1,2055 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>遊タイム期待値簡易計算ツール</title>
+<style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --border-color: #ddd;
+        }
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: #333;
+            margin: 0;
+            padding: 10px;
+            font-size: 14px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .section-title {
+            font-weight: bold;
+            border-bottom: 2px solid var(--primary-color);
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            color: var(--primary-color);
+        }
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .input-item {
+            flex: 1 1 140px;
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-size: 0.85rem;
+            margin-bottom: 3px;
+            color: #666;
+        }
+        input, select {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        /* アコーディオン */
+        .accordion {
+            background-color: #eee;
+            color: #444;
+            cursor: pointer;
+            padding: 10px;
+            width: 100%;
+            text-align: left;
+            border: none;
+            outline: none;
+            transition: 0.4s;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .active, .accordion:hover {
+            background-color: #ccc;
+        }
+        .panel {
+            padding: 0 10px;
+            background-color: white;
+            display: none;
+            overflow: hidden;
+            margin-bottom: 10px;
+            border: 1px solid #eee;
+        }
+
+        /* 結果表示エリア */
+        #result-area {
+            background-color: #e8f6f3;
+            border: 2px solid #1abc9c;
+            text-align: center;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .result-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        .result-sub {
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        /* ボタン */
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn-calc {
+            background-color: var(--accent-color);
+            font-weight: bold;
+            font-size: 1.2rem;
+            padding: 15px;
+        }
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            width: auto;
+        }
+        .btn-danger { background-color: #c0392b; }
+        .btn-success { background-color: #27ae60; }
+
+        /* テーブル */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 5px;
+            text-align: center;
+        }
+        th { background-color: #f2f2f2; }
+        .input-mini { width: 50px; text-align: right; }
+        .input-mid { width: 60px; text-align: right; }
+        
+        /* プリセット操作 */
+        #preset-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .note {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
+    
+        .small-note{ font-size:12px; color:#666; }
+        .small-note.bad{ color:#c0392b; font-weight:700; }
+    </style>
+</head>
+<body>
+<div class="container">
+<h1>遊タイム期待値簡易計算ツール</h1>
+<!-- 説明欄 -->
+<button class="accordion">ツールの説明・注意事項 (タップで開閉)</button>
+<div class="panel">
+<p>このツールは遊タイム搭載機の期待値を計算します。<br/>
+<strong>ST+時短などの混合スペックに対応しました。</strong></p>
+<ul>
+<li><strong>確変/ST:</strong> 高確率状態で消化する回転数を入力。</li>
+<li><strong>時短:</strong> 通常確率で消化する回転数を入力。</li>
+<li><strong>次回まで:</strong> 「10000」など大きな数字を入力してください。</li>
+<li><strong>1種2種混合機:</strong> 実質確率が高確率なら「確変/ST」に入力し、時短は0にしてください。</li>
+</ul>
+
+<hr style="border:none;border-top:1px solid #eee;margin:10px 0;">
+
+<p style="margin:0 0 6px;"><strong>払い出し(合計) / カウント（任意）について</strong></p>
+<ul>
+<li>特図振り分けの各行にある「払い出し(合計)」「カウント」は <strong>任意入力</strong> です。</li>
+<li>未入力の場合は <strong>既定値：払い出し15 / カウント10</strong> として参考値を算出します。</li>
+<li>算出される <strong>1R払い出し（参考）</strong> は、<strong>こぼし・オーバー入賞は非考慮</strong> の理論値です。</li>
+</ul>
+
+<p style="margin:0 0 6px;"><strong>1R払い出し（参考・自動）について</strong></p>
+<ul>
+<li><strong>参考1R（自動）</strong>：特図1/2/3 をまとめて参考値を表示（内訳はツールチップ）。</li>
+<li>実戦値に合わせる場合は、環境欄の <strong>「1R出玉（実測）」</strong> を手動で調整してください。</li>
+</ul>
+<hr style="border:none;border-top:1px solid #eee;margin:10px 0;">
+<p style="margin:0 0 6px;"><strong>移行先・辛め調整について</strong></p>
+<ul>
+<li><strong>移行先</strong>＝<strong>当たり後に遷移する特図</strong>です。（特図1=通常 / 特図2=下位RUSH / 特図3=上位RUSH）</li>
+<li><strong>辛め調整</strong>は、残保留設定の <strong>「計算OFF（全保留無視）」</strong> を使って行ってください。</li>
+</ul>
+<hr style="border:none;border-top:1px solid #eee;margin:10px 0;">
+<p style="margin:0 0 6px;"><strong>閉店欠損（目安）について</strong></p>
+<ul>
+<li>閉店欠損は<strong>連荘（出玉分布）</strong>を考慮して算出しています。</li>
+<li>一方で<strong>初当たりまでの回転数分布（幾何分布）</strong>は平均回転ベースの扱いです。そのため、実際の欠損は本ツール表示より<strong>やや大きくなる可能性</strong>があります（目安としてご利用ください）。</li>
+</ul>
+
+<hr style="border:none;border-top:1px solid #eee;margin:10px 0;">
+<p style="margin:0 0 6px;"><strong>時給・消化時間（目安）について</strong></p>
+<ul>
+<li>時給・消化時間は、入力した <strong>通常時速（回転/h）</strong> と <strong>大当たり時速（玉/h）</strong> をもとに算出します。</li>
+<li>未入力のままでもデフォルト値で計算されますが、<strong>あくまで目安</strong>です（店・機種・止め打ちで大きく変わります）。</li>
+<li>また、初当たり確率は <strong>一定確率（平均回転）</strong> として扱っており、初当たり回転数の分布（幾何分布）は考慮していません。</li>
+</ul>
+
+
+<h2>■ 計算対象外機種について</h2>
+<p>本ツールは、通常大当たりを基準とした機種を対象としています。</p>
+<ul>
+<li>小当たりRUSH搭載機種</li>
+<li>大当たりとは別に小当たりによる出玉増加が発生する機種</li>
+<li>途中小当たりを挟む特殊構造機種</li>
+</ul>
+<p>これらの機種は内部出玉処理が異なるため、本ツールでは正確な再現ができません。</p>
+
+</div>
+
+<!-- プリセット機能 -->
+<div class="card">
+<div class="section-title">プリセット読込/保存</div>
+<div id="preset-controls">
+<select id="preset-select" style="flex: 1;">
+<option value="">-- 機種を選択 --</option>
+</select>
+<button class="btn btn-sm btn-success" onclick="loadPreset()">読込</button>
+<button class="btn btn-sm btn-danger" onclick="deletePreset()">削除</button>
+<button class="btn btn-sm btn-danger" onclick="confirmResetBaseline()">初期化</button>
+</div>
+<div style="display:flex; gap:10px;">
+<input id="preset-name" placeholder="新規保存名" style="flex:1;" type="text"/>
+<button class="btn btn-sm" onclick="savePreset()">保存</button>
+</div>
+</div>
+
+<!-- 計算結果表示エリア -->
+<div id="result-area">
+<div>期待値 (等価/持ち玉)</div>
+<div class="result-value" id="res-expected-value">---- 円</div>
+<div class="result-sub">
+            ボーダー: <span id="res-border">--</span> /1k<br/>
+            平均出玉: <span id="res-avg-out">--</span> 玉<br/>
+            消化時間: <span id="res-time">--</span> 分
+        </div>
+<div id="res-hourly-area" style="display:none; margin-top:10px; border-top:1px dashed #aaa; padding-top:5px;">
+            時給: <span id="res-hourly" style="font-weight:bold; color:#e74c3c;">----</span> 円
+        </div>
+</div>
+
+<button type="button" class="btn btn-calc" onclick="calculate()">計算する</button>
+
+<!-- 入力フォーム -->
+<div class="card">
+<div class="section-title">遊技環境 / 技術介入</div>
+<div class="input-group">
+<div class="input-item">
+<label>遊タイムまで残り</label>
+<input id="env-remaining" type="number" value=""/>
+</div>
+<div class="input-item">
+<label>回転率 (/1k)</label>
+<input id="env-rotation" step="0.1" type="number" value=""/>
+</div>
+<div class="input-item">
+<label>交換率 (円/玉)</label>
+<input id="env-exchange" step="0.1" type="number" value="4"/>
+</div>
+<div class="input-item">
+<label>現在持ち玉 (玉)</label>
+<input id="env-hold-balls" type="number" value="0"/>
+</div>
+<div class="input-item">
+<label>1R出玉 (実測)</label>
+<input id="env-round-out" type="number" value=""/>
+</div>
+<div class="input-item">
+<label>電サポ増減 (個/回転)</label>
+<input id="env-support-change" step="0.1" type="number" value="0"/>
+</div>
+<div class="input-item">
+</div>
+<button class="accordion">時給・閉店欠損 (タップで設定)</button>
+<div class="panel">
+<div class="input-group">
+<div class="input-item">
+<label>通常時速 (回転/h)</label>
+<input id="speed-normal" type="number" value="200"/>
+</div>
+<div class="input-item">
+<label>大当たり時速 (玉/h)</label>
+<input id="speed-hit" type="number" value="20000"/>
+</div>
+<div class="input-item">
+<label>閉店まで (分)</label>
+<input id="time-remaining" type="number" value="600"/>
+</div>
+</div>
+</div>
+</div>
+
+<button class="accordion">基本スペック (タップで開閉)</button>
+<div class="panel">
+<div class="card">
+<div class="section-title">基本スペック</div>
+<div class="input-group">
+<div class="input-item">
+<label>通常時確率 (1/N)</label>
+<input id="spec-prob-normal" step="0.1" type="number" value="319.9"/>
+</div>
+<div class="input-item">
+<label>確変/ST中確率 (1/N)</label>
+<input id="spec-prob-high" step="0.1" type="number" value="99.9"/>
+</div>
+<div class="input-item">
+<label>遊タイム中確率 (1/N)</label>
+<input id="spec-prob-yutime" step="0.1" type="number" value="319.9"/>
+</div>
+<div class="input-item">
+<label>遊タイム確率の参照</label>
+<select id="spec-yutime-prob-source">
+<option value="custom">上の遊タイム中確率を使う</option>
+<option value="normal">通常確率(特図1通常)</option>
+<option value="high">高確率(特図1高確)</option>
+</select>
+</div>
+<div class="input-item">
+<label>遊タイム当たりの特図</label>
+<select id="spec-yutime-hit-table">
+<option value="t2">特図2 (RUSH当たり)</option>
+<option value="t1">特図1 (ヘソ当たり)</option>
+<option value="t3">特図3 (上位RUSH当たり)</option>
+</select>
+</div>
+<div class="input-item">
+<label>遊タイム当選の期待値範囲</label>
+<select id="spec-yutime-scope">
+  <option value="after">当選後の状態のみ（1回目を含めない）</option>
+  <option value="include">当選した当たり1回目を含める</option>
+</select>
+</div>
+<div class="input-item">
+<label>遊タイム電サポ回数</label>
+<input id="spec-yutime-count" type="number" value="1200"/>
+</div>
+<div class="input-item">
+<label>遊タイム移行先</label>
+<select id="spec-yutime-dest">
+<option value="1">特図1（通常へ）</option>
+<option value="2" selected>特図2（RUSH/下位）</option>
+<option value="3">特図3（上位RUSH）</option>
+</select>
+</div>
+
+<div class="input-item">
+  <label>参考1R（自動）</label>
+  <input id="spec-auto-pay1r" readonly="" type="text" value="-"/>
+</div>
+</div>
+
+<div style="margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
+<label><strong>残保留設定</strong></label>
+<div class="input-group">
+<div class="input-item" style="flex:0 0 80px;">
+<label>計算</label>
+<select id="res-calc-on">
+<option value="1">ON</option>
+<option value="0" selected>OFF</option>
+</select>
+</div>
+<div class="input-item">
+<label>抽選確率</label>
+<select id="res-prob-type">
+<option value="normal">通常確率 (1/319等)</option>
+<option value="high">高確率 (1/99等)</option>
+</select>
+</div>
+<div class="input-item">
+<label>個数</label>
+<input id="res-count" max="8" type="number" value="4"/>
+</div>
+<div class="input-item">
+<label>当選時の特図(残保留)</label>
+<select id="res-hit-table">
+<option value="inherit">遷移先を継承</option>
+<option value="t1">特図1(ヘソ)</option>
+<option value="t2">特図2(電チュー)</option>
+<option value="t3">特図3(上位)</option>
+</select>
+</div>
+</div>
+</div>
+</div>
+
+
+</div>
+<button class="accordion">特図振り分け (タップで開閉)</button>
+<div class="panel">
+<div class="card">
+<div class="section-title">特図振り分け</div>
+<p class="note">
+<strong>確変/ST:</strong> 高確率(確変/ST中確率)で抽選する回数<br/>
+<strong>時短:</strong> 通常確率で抽選する回数<br/>
+            ※次回までの場合は「10000」など大きな数字を入力
+        </p>
+<p class="note">※「払い出し(合計)」「カウント」は任意入力です（未入力の場合は既定値: 払い出し15 / カウント10 で参考1Rを算出）。</p>
+
+<!-- 特図1 (ヘソ) -->
+<div style="margin-bottom: 10px;">
+            特図1 (通常/ヘソ)
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 4px;">
+  <button class="btn btn-sm" onclick="addRow('table-spec1')">＋ 行追加</button>
+  <span id="sum-table-spec1" class="small-note"></span>
+</div>
+<table id="table-spec1">
+<thead>
+<tr>
+<th>R数</th>
+<th>確変/ST</th>
+<th>時短</th>
+<th>移行先</th>
+<th>振分(%)</th>
+<th>払い出し(合計)</th><th>カウント</th><th>操作</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+<button class="btn btn-sm" onclick="addRow('table-spec1')">＋ 行追加</button>
+</div>
+
+<!-- 特図2 (電チュー/RUSH) -->
+<div style="margin-bottom: 10px;">
+            特図2 (RUSH/下位)
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 4px;">
+  <button class="btn btn-sm" onclick="addRow('table-spec2')">＋ 行追加</button>
+  <span id="sum-table-spec2" class="small-note"></span>
+</div>
+<table id="table-spec2">
+<thead>
+<tr>
+<th>R数</th>
+<th>確変/ST</th>
+<th>時短</th>
+<th>移行先</th>
+<th>振分(%)</th>
+<th>払い出し(合計)</th><th>カウント</th><th>操作</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+<button class="btn btn-sm" onclick="addRow('table-spec2')">＋ 行追加</button>
+</div>
+
+<!-- 特図3 (上位RUSH) -->
+<div>
+            特図3 (上位RUSH/特殊)
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 4px;">
+  <button class="btn btn-sm" onclick="addRow('table-spec3')">＋ 行追加</button>
+  <span id="sum-table-spec3" class="small-note"></span>
+</div>
+<table id="table-spec3">
+<thead>
+<tr>
+<th>R数</th>
+<th>確変/ST</th>
+<th>時短</th>
+<th>移行先</th>
+<th>振分(%)</th>
+<th>払い出し(合計)</th><th>カウント</th><th>操作</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+<button class="btn btn-sm" onclick="addRow('table-spec3')">＋ 行追加</button>
+</div>
+</div>
+
+
+</div>
+<button class="btn btn-calc" onclick="calculate()">計算する</button>
+
+<script>
+    // --- 初期化・UI操作 ---
+    // 汎用ヘルパー
+    const toRatio = (pct)=>{
+        const v = parseFloat(pct);
+        if(Number.isNaN(v)) return 0;
+        return v/100;
+    };
+    // --- 入力内容の初期化（空の初期状態へ） ---
+    // ※プリセットデータ自体（保存内容）は消さず、画面の入力だけを初期状態に戻します。
+    function confirmResetBaseline(){
+        const ok = window.confirm('入力内容を初期化します。よろしいですか？\n（プリセットの保存データは消えません）');
+        if(!ok) return;
+        resetToBaselineEmpty();
+    }
+
+    function setVal(id, v){
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.value = v;
+        el.dispatchEvent(new Event('input', { bubbles:true }));
+        el.dispatchEvent(new Event('change', { bubbles:true }));
+    }
+
+    function clearTable(tableId){
+        const t = document.getElementById(tableId);
+        if(!t) return;
+        const tb = t.querySelector('tbody');
+        if(tb) tb.innerHTML = '';
+    }
+
+    function resetToBaselineEmpty(){
+        // プリセットUI
+        setVal('preset-select','');
+        setVal('preset-name','');
+
+        // 遊技環境
+        setVal('env-remaining','');
+        setVal('env-rotation','');
+        setVal('env-exchange','4');
+        setVal('env-hold-balls','0');
+        setVal('env-round-out','');
+        setVal('env-support-change','0');
+
+        // 時給・閉店欠損
+        setVal('speed-normal','200');
+        setVal('speed-hit','20000');
+        setVal('time-remaining','600');
+
+        // 基本スペック
+        setVal('spec-prob-normal','');
+        setVal('spec-prob-high','');
+        setVal('spec-prob-yutime','');
+        setVal('spec-yutime-prob-source','custom');
+        setVal('spec-yutime-hit-table','t2');
+        setVal('spec-yutime-scope','after');
+        setVal('spec-yutime-count','');
+        setVal('spec-yutime-dest','2');
+        // 参考1R（自動表示）
+        setVal('spec-auto-pay1r','');
+
+        // 残保留
+        setVal('res-calc-on','0');
+        setVal('res-prob-type','normal');
+        setVal('res-count','4');
+        setVal('res-hit-table','inherit');
+
+        // 特図振り分け（テーブルを空に）
+        ['table-spec1','table-spec2','table-spec3'].forEach(clearTable);
+
+        // 結果表示の初期化
+        const ev = document.getElementById('res-expected-value');
+        const yev = document.getElementById('res-yutime-expected');
+        const loss = document.getElementById('res-loss-close');
+        if(ev) ev.textContent = '---- 円';
+        if(yev) yev.textContent = '---- 円';
+        if(loss) loss.textContent = '---- 円';
+
+        // 参照値の再計算
+        bindAutoPay1RDelegation();
+        updateAutoPay1RRef();
+        updatePctSums();
+    }
+
+
+
+    // --- 行ごとの払い出し自動計算（ステップ①） ---
+    function getDefaultPayCnt(tableId){
+        // 特図上部の既定値（UIには出さない）
+        if(tableId === 'table-spec1') return { pay: 15, cnt: 10 };
+        if(tableId === 'table-spec2') return { pay: 15, cnt: 10 };
+        if(tableId === 'table-spec3') return { pay: 15, cnt: 10 };
+        return { pay: 0, cnt: 0 };
+    }
+
+    function updateRowPayout(row, tableId){
+        // 行の入力変更時に参照値(1R払い出し)を更新するためのフック
+        // （行内の自動計算表示は行わない）
+        bindAutoPay1RDelegation();
+        updateAutoPay1RRef();
+    updatePctSums();
+        }
+
+    function computeTableAvgPay1R(tableId){
+        const def = getDefaultPayCnt(tableId);
+        const rows = document.getElementById(tableId)?.querySelectorAll('tbody tr') || [];
+
+        // ユーザー指定の定義（参考表示用）
+        // 実質払い出し(合計) = 払い出し(合計) - カウント × R数
+        // 1R払い出し(参考)   = 実質払い出し(合計) ÷ R数
+        //
+        // ※「払い出し(合計)」が未入力の場合のみ、既定値(払い出し15 / カウント10)を用いて
+        //   払い出し(合計) = 15 × カウント × R数 として補完する。
+        // ※この値はあくまで参考表示。期待値計算の出玉は「1R出玉(実測)」を使う想定。
+        let sumW = 0;
+        let sum = 0;
+
+        rows.forEach(row=>{
+            const r = parseFloat(row.querySelector('.row-r')?.value || '0') || 0;
+            const p = parseFloat(row.querySelector('.row-p')?.value || '0') || 0;
+
+            const payRaw = row.querySelector('.row-pay')?.value; // 払い出し(合計)
+            const cntRaw = row.querySelector('.row-cnt')?.value; // カウント
+
+            let cnt = parseFloat(cntRaw);
+            if (cntRaw === '' || Number.isNaN(cnt)) cnt = def.cnt;
+
+            // 振分0やR数0は無視
+            if (p <= 0) return;
+            if (r <= 0) return;
+
+            // 払い出し(合計)の補完
+            let payTotal = parseFloat(payRaw);
+            if (payRaw === '' || Number.isNaN(payTotal)) {
+                // 既定の「払い出し(1C)=15」を使って合計払い出しを作る
+                payTotal = def.pay * cnt * r;
+            }
+
+            // 実質払い出し(合計) = 払い出し(合計) - カウント×R
+            const effTotal = payTotal - (cnt * r);
+            const perR = effTotal / r;
+
+            const w = (p/100);
+            sum += w * perR;
+            sumW += w;
+        });
+
+        if (sumW <= 0) return null;
+        return (sum / sumW);
+    }
+
+
+    // --- 自動 1R払い出し（参考）: 連荘(滞在)を加味した推定 ---
+// 方針:
+// - 入力(払い出し合計/カウント/R/振分)から「実質1R払い出し」を計算（ユーザー定義）
+// - 次の当たりが発生する確率は、各行の「確変/ST」「時短」回数と分母(spec)から算出（残保留設定も加味）
+// - 連荘(滞在)を考慮するため、特図1/2/3 を状態としたマルコフ連鎖の期待訪問回数を計算し、
+//   E[総払い出し]/E[総R] を「全特図まとめ(参考)」として表示する
+//
+// 注意:
+// - これはあくまで参考表示。期待値計算の出玉は「1R出玉(実測)」を使用する設計。
+// - 連鎖は「当たり後にどの特図へ移行するか(row.d)」で遷移させ、移行先=特図1(通常へ)は「連荘終了」とみなす。
+
+function _getSpecEnvForAutoPay(){
+    const spec = {
+        normal: parseFloat(document.getElementById('spec-prob-normal')?.value || '0'),
+        high: parseFloat(document.getElementById('spec-prob-high')?.value || '0'),
+    };
+    const env = {
+        resOn: document.getElementById('res-calc-on')?.value === "1",
+        resType: document.getElementById('res-prob-type')?.value || 'normal',
+        resCount: parseInt(document.getElementById('res-count')?.value || '0', 10) || 0,
+        resHitTable: (document.getElementById('res-hit-table')?.value || 'inherit'),
+    };
+    return {spec, env};
+}
+
+function _rowEffTotalsForAutoPay(row, tableId){
+    const def = getDefaultPayCnt(tableId);
+    const r = Number(row.querySelector('.row-r')?.value || 0) || 0;
+    const p = Number(row.querySelector('.row-p')?.value || 0) || 0;
+
+    const payRaw = row.querySelector('.row-pay')?.value; // 払い出し(合計)
+    const cntRaw = row.querySelector('.row-cnt')?.value; // カウント
+    let cnt = parseFloat(cntRaw);
+    if (cntRaw === '' || Number.isNaN(cnt)) cnt = def.cnt;
+
+    let payTotal = parseFloat(payRaw);
+    if (payRaw === '' || Number.isNaN(payTotal)) {
+        // 既定: 払い出し(1C)=15 を前提に合計払い出しを補完
+        payTotal = def.pay * cnt * r;
+    }
+
+    // ユーザー定義: 実質払い出し(合計) = 払い出し(合計) - カウント×R
+    const effTotal = payTotal - (cnt * r);
+
+    return { r, p, cnt, payTotal, effTotal };
+}
+
+function _calcHitProbForRow(spec, env, rowObj){
+    // rowObj: {s1, s2}
+    const s1 = Number(rowObj.s1 || 0) || 0; // 確変/ST回数
+    const s2 = Number(rowObj.s2 || 0) || 0; // 時短回数
+
+    const sup = calcTwoStageSupport(spec.high, s1, 2, spec.normal, s2, 1);
+    const pSupportHit = sup.totalHit; // 電サポ内で当たる確率
+
+    let pResHit = 0;
+    if (env.resOn && env.resCount > 0 && pSupportHit < 1) {
+        const resProb = (env.resType === 'high') ? (1/spec.high) : (1/spec.normal);
+        const reach = (1 - pSupportHit);
+        pResHit = reach * (1 - Math.pow(1 - resProb, env.resCount));
+    }
+
+    // 合算（上限1）
+    return Math.min(1, pSupportHit + pResHit);
+}
+
+function _tableStatsAndTrans(tableId, stateId, spec, env){
+    const rows = document.getElementById(tableId)?.querySelectorAll('tbody tr') || [];
+    if (!rows.length) {
+        return {
+            avgRounds: 0,
+            avgEffPayout: 0,
+            // 遷移（特図1/2/3のみ。特図1移行は終了扱い）
+            pTo: {1:0, 2:0, 3:0}
+        };
+    }
+
+    // 行比率（表内の振分を正規化）
+    let totalP = 0;
+    rows.forEach(r=>{ totalP += (Number(r.querySelector('.row-p')?.value || 0) || 0); });
+    if (totalP <= 0) {
+        return { avgRounds:0, avgEffPayout:0, pTo:{1:0,2:0,3:0} };
+    }
+
+    let avgRounds = 0;
+    let avgEffPayout = 0;
+    let pTo2 = 0, pTo3 = 0;
+
+    rows.forEach(rw=>{
+        const eff = _rowEffTotalsForAutoPay(rw, tableId);
+        if (eff.r <= 0) return;
+        if (eff.p <= 0) return;
+
+        const ratio = eff.p / totalP;
+
+        // この当たり1回あたりのR数/実質払い出しを加重平均
+        avgRounds += eff.r * ratio;
+        avgEffPayout += eff.effTotal * ratio;
+
+        // 次の当たりが発生する確率（ST/時短 + 残保留）
+        const rowObj = {
+            s1: Number(rw.querySelector('.row-s1')?.value || 0) || 0,
+            s2: Number(rw.querySelector('.row-s2')?.value || 0) || 0,
+            d: parseInt(rw.querySelector('.row-d')?.value || '1', 10) || 1
+        };
+        const pNextHit = _calcHitProbForRow(spec, env, rowObj);
+
+        // 移行先: 1=通常へ（連荘終了扱い）, 2=下位RUSH, 3=上位RUSH
+        if (rowObj.d === 2) pTo2 += ratio * pNextHit;
+        else if (rowObj.d === 3) pTo3 += ratio * pNextHit;
+        // d===1 は終了扱い → ここではどこにも加算しない
+    });
+
+    // 状態遷移（状態1/2/3のみに閉じたQを作る）
+    const pTo = {1:0, 2:pTo2, 3:pTo3};
+    return { avgRounds, avgEffPayout, pTo };
+}
+
+function _computeChainPay1R(startState, spec, env){
+    // states: 1=特図1, 2=特図2, 3=特図3
+    const s1 = _tableStatsAndTrans('table-spec1', 1, spec, env);
+    const s2 = _tableStatsAndTrans('table-spec2', 2, spec, env);
+    const s3 = _tableStatsAndTrans('table-spec3', 3, spec, env);
+
+    const stats = {1:s1, 2:s2, 3:s3};
+
+    // Q (3x3)
+    const Q = [
+        [0, s1.pTo[2]||0, s1.pTo[3]||0],
+        [0, s2.pTo[2]||0, s2.pTo[3]||0],
+        [0, s3.pTo[2]||0, s3.pTo[3]||0],
+    ];
+    // 特図1への遷移は「連荘終了扱い」なのでQの列0は常に0
+
+    // F = (I - Q)^-1
+    const IminusQ = [
+        [1 - Q[0][0],    -Q[0][1],    -Q[0][2]],
+        [   -Q[1][0], 1 - Q[1][1],    -Q[1][2]],
+        [   -Q[2][0],    -Q[2][1], 1 - Q[2][2]],
+    ];
+
+    let F;
+    try {
+        F = invertMatrix(IminusQ);
+    } catch(e){
+        return { pay1r: null, totalRounds: 0, totalPayout: 0 };
+    }
+
+    const idx = Math.max(1, Math.min(3, startState)) - 1;
+    const visits = F[idx]; // startState からの期待訪問回数（各状態の当たり回数）
+
+    let totalRounds = 0;
+    let totalPayout = 0;
+    for (let s=1; s<=3; s++){
+        const v = Number(visits[s-1] || 0);
+        totalRounds += v * (stats[s].avgRounds || 0);
+        totalPayout += v * (stats[s].avgEffPayout || 0);
+    }
+
+    const pay1r = (totalRounds > 0) ? (totalPayout / totalRounds) : null;
+    return { pay1r, totalRounds, totalPayout };
+}
+
+function updateAutoPay1RRef(){
+        // 参考1R（自動）
+        // 目的：打ち出し時点（ヘソ開始）を基準に、滞在比率（平均連荘）を加味した参考1Rを算出する。
+        // - 各行の 1R払い出しは「(払い出し(合計) - カウント×R) ÷ R」で算出（ユーザー定義）
+        // - 各特図(1/2/3)の「当たり後に次の当たりへつながる確率」を、電サポ(s1/s2)＋残保留で推定し、
+        //   特図間の遷移(移行先 d)で3状態マルコフ連鎖を作る。
+        // - 打ち出し時点は env-remaining（遊タイムまで残り）を参照。未入力は 0 扱い。
+
+        const payT1 = computeTableAvgPay1R('table-spec1'); // 特図1（通常へ）
+        const payT2 = computeTableAvgPay1R('table-spec2'); // 特図2（RUSH/下位）
+        const payT3 = computeTableAvgPay1R('table-spec3'); // 特図3（上位RUSH）
+
+        const allEl = document.getElementById('spec-auto-pay1r');
+        const rightEl = document.getElementById('spec-auto-pay1r-right');
+
+        // --- spec/env（既存入力のみ利用） ---
+        const spec = {
+            normal: parseFloat(document.getElementById('spec-prob-normal')?.value || '0'),
+            high: parseFloat(document.getElementById('spec-prob-high')?.value || '0')
+        };
+        const remainingRaw = document.getElementById('env-remaining')?.value;
+        const remaining = (remainingRaw === '' || remainingRaw === null || remainingRaw === undefined) ? 0 : (parseInt(remainingRaw, 10) || 0);
+
+        const env = {
+            resOn: document.getElementById('res-calc-on')?.value == "1",
+            resType: document.getElementById('res-prob-type')?.value || 'high',
+            resCount: parseInt(document.getElementById('res-count')?.value || '0', 10) || 0
+        };
+
+        // --- 3状態（特図1/2/3）の遷移確率行列 P を作る ---
+        // P[i][j] = 「特図 i の当たりの後、電サポ/残保留で当たりを引き、その次の当たりが特図 j になる確率」
+        function buildPForTable(tableId){
+            const table = getTableData(tableId) || [];
+            const totalP = table.reduce((s,r)=>s+(Number(r.p)||0), 0);
+            // 行列（1..3 を 0..2 に写像）
+            const rowP = [0,0,0];
+            if (totalP <= 0) return rowP;
+
+            table.forEach(row=>{
+                const w = (Number(row.p)||0) / totalP;
+                if (w <= 0) return;
+
+                const s1 = Number(row.s1)||0;
+                const s2 = Number(row.s2)||0;
+
+                // 電サポ中当選確率（高確 s1 回 + 通常 s2 回）
+                const sup = calcTwoStageSupport(spec.high, s1, 2, spec.normal, s2, 1);
+                let pHit = sup.totalHit;
+
+                // 残保留（設定ONの場合）
+                if (env.resOn && pHit < 1.0 && env.resCount > 0) {
+                    const resProb = (env.resType === 'high') ? (1/spec.high) : (1/spec.normal);
+                    const pRes = 1 - Math.pow(1 - resProb, env.resCount);
+                    pHit = Math.min(1, pHit + (1 - pHit) * pRes);
+                }
+
+                // 次の当たりの特図（移行先）
+                const d = parseInt(row.d, 10) || 1; // 念のため通常
+                const j = (d===1?0:(d===2?1:2));
+                rowP[j] += w * pHit;
+            });
+
+            // 数値誤差ガード（行和<=1）
+            const s = rowP[0]+rowP[1]+rowP[2];
+            if (s > 1) {
+                rowP[0] /= s; rowP[1] /= s; rowP[2] /= s;
+            }
+            return rowP;
+        }
+
+        function buildP(){
+            const r1 = buildPForTable('table-spec1'); // from Tok1
+            const r2 = buildPForTable('table-spec2'); // from Tok2
+            const r3 = buildPForTable('table-spec3'); // from Tok3
+            return [r1,r2,r3];
+        }
+
+        function expectedVisits(startIdx, P){
+            // (I - P)^-1 の startIdx 行が「各状態の期待訪問回数」（初回=1回を含む）
+            const n = 3;
+            const IminusP = Array.from({length:n}, (_,i)=>Array.from({length:n}, (_,j)=> (i===j?1:0) - (P[i][j]||0)));
+            const F = invertMatrix(IminusP);
+            return F[startIdx]; // length 3
+        }
+
+        // どの表が存在するか（pay>0 かつ table に行がある）を見て、加重平均対象を決める
+        const hasT1 = Number.isFinite(payT1) && payT1 > 0;
+        const hasT2 = Number.isFinite(payT2) && payT2 > 0;
+        const hasT3 = Number.isFinite(payT3) && payT3 > 0;
+
+        const P = buildP();
+
+        // ヘソ到達前に当たる確率（未入力=0なら 0 扱い）
+        let pPreHit = 0;
+        if (remaining > 0 && spec.normal > 0) {
+            pPreHit = 1 - Math.pow(1 - 1/spec.normal, remaining);
+        }
+        const pReachY = 1 - pPreHit;
+
+        // 遊タイム開始後の「最初の当たりの特図」
+        const ytTbl = document.getElementById('spec-yutime-hit-table')?.value || 't2';
+        const ytStartIdx = (ytTbl === 't1') ? 0 : (ytTbl === 't3' ? 2 : 1);
+
+        // 期待訪問回数（ヘソ当たり開始 / 遊タイム当たり開始）を混ぜる
+        const vFromT1 = expectedVisits(0, P);
+        const vFromYT = expectedVisits(ytStartIdx, P);
+
+        const w = [
+            pPreHit * (vFromT1[0]||0) + pReachY * (vFromYT[0]||0),
+            pPreHit * (vFromT1[1]||0) + pReachY * (vFromYT[1]||0),
+            pPreHit * (vFromT1[2]||0) + pReachY * (vFromYT[2]||0),
+        ];
+
+        // 実際に存在する表だけで加重平均（存在しない表は重み0扱い）
+        let num = 0, den = 0;
+        if (hasT1) { num += payT1 * w[0]; den += w[0]; }
+        if (hasT2) { num += payT2 * w[1]; den += w[1]; }
+        if (hasT3) { num += payT3 * w[2]; den += w[2]; }
+
+        if (allEl){
+            allEl.value = (den > 0) ? (num/den).toFixed(2) : '';
+        }
+
+        if (rightEl){
+            // 右実効1R（参考）：開始=遊タイム当たり先の「連鎖を加味した平均」（より参考値として強い）
+            const vR = vFromYT;
+            let numR = 0, denR = 0;
+            if (hasT1) { numR += payT1 * (vR[0]||0); denR += (vR[0]||0); }
+            if (hasT2) { numR += payT2 * (vR[1]||0); denR += (vR[1]||0); }
+            if (hasT3) { numR += payT3 * (vR[2]||0); denR += (vR[2]||0); }
+            rightEl.value = (denR > 0) ? (numR/denR).toFixed(2) : '';
+        }
+    }
+
+
+
+    function updateAllRowPayouts(tableId){
+        const rows = document.getElementById(tableId)?.querySelectorAll('tbody tr') || [];
+        rows.forEach(r => updateRowPayout(r, tableId));
+    }
+
+    const acc = document.getElementsByClassName("accordion");
+    for (let i = 0; i < acc.length; i++) {
+        acc[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            var panel = this.nextElementSibling;
+            if (panel.style.display === "block") {
+                panel.style.display = "none";
+            } else {
+                panel.style.display = "block";
+            }
+        });
+    }
+
+    // テーブル行追加 (カラム変更対応)
+    function addRow(tableId, data = null) {
+        const table = document.getElementById(tableId).getElementsByTagName('tbody')[0];
+        const newRow = table.insertRow();
+
+        const rVal = (data && data.r != null) ? data.r : 10;
+        const s1Val = (data && data.s1 != null) ? data.s1 : 0; // 確変/ST
+        const s2Val = (data && data.s2 != null) ? data.s2 : 0; // 時短
+const dVal = (data && data.d != null) ? data.d : 2;
+const pVal = (data && data.p != null) ? data.p : 0;
+
+        const payVal = (data && data.pay !== undefined && data.pay !== null) ? data.pay : '';
+        const cntVal = (data && data.cnt !== undefined && data.cnt !== null) ? data.cnt : '';
+
+        newRow.innerHTML = `
+            <td><input type="number" class="input-mini row-r" value="${rVal}"></td>
+<td><input type="number" class="input-mid row-s1" value="${s1Val}"></td>
+            <td><input type="number" class="input-mid row-s2" value="${s2Val}"></td>
+<td>
+                <select class="row-d">
+<option value="1">特図1（通常へ）</option>
+<option value="2">特図2（RUSH/下位）</option>
+<option value="3">特図3（上位RUSH）</option>
+</select>
+            </td>
+<td><input type="number" class="input-mini row-p" value="${pVal}"></td>
+            <td><input type="number" class="input-mini row-pay" value="${payVal}" placeholder="(既定)"></td>
+            <td><input type="number" class="input-mini row-cnt" value="${cntVal}" placeholder="(既定)"></td>
+            <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">削除</button></td>
+        `;
+
+        // set default selected for dest
+        const sel = newRow.querySelector('.row-d');
+        if (sel) sel.value = String(dVal);
+
+        updateRowPayout(newRow, tableId);
+        newRow.querySelectorAll('input, select').forEach(el => {
+            el.addEventListener('input', () => updateRowPayout(newRow, tableId));
+            el.addEventListener('change', () => updateRowPayout(newRow, tableId));
+        });
+
+        // 念のため最後に1回
+        bindAutoPay1RDelegation();
+        updateAutoPay1RRef();
+    updatePctSums();
+        }
+
+    function deleteRow(btn) {
+        const row = btn.parentNode.parentNode;
+        row.parentNode.removeChild(row);
+        bindAutoPay1RDelegation();
+        updateAutoPay1RRef();
+    updatePctSums();
+        }
+
+    // 振分(%) 合計チェック（表示のみ）
+    function updatePctSums(){
+        const tableIds = ['table-spec1','table-spec2','table-spec3'];
+        tableIds.forEach(tid=>{
+            const rows = document.getElementById(tid)?.querySelectorAll('tbody tr') || [];
+            let sum = 0;
+            rows.forEach(r=>{
+                const v = parseFloat(r.querySelector('.row-p')?.value || '0');
+                if(!Number.isNaN(v)) sum += v;
+            });
+            const el = document.getElementById('sum-'+tid);
+            if(!el) return;
+            const rounded = Math.round(sum*10)/10;
+            if(rows.length===0){
+                el.textContent = '';
+                el.classList.remove('bad');
+                return;
+            }
+            el.textContent = `振分合計: ${rounded}%`;
+            if(Math.abs(rounded-100) > 0.05){
+                el.classList.add('bad');
+            }else{
+                el.classList.remove('bad');
+            }
+        });
+    }
+
+    // テーブルデータ取得 (s1, s2対応)
+    function getTableData(tableId) {
+        const rows = document.getElementById(tableId).querySelectorAll('tbody tr');
+        let data = [];
+        rows.forEach(row => {
+            data.push({
+                r: parseFloat(row.querySelector('.row-r').value) || 0,
+                s1: parseFloat(row.querySelector('.row-s1').value) || 0,
+                s2: parseFloat(row.querySelector('.row-s2').value) || 0,
+d: parseInt(row.querySelector('.row-d').value) || 0,
+p: parseFloat(row.querySelector('.row-p').value) || 0,
+                pay: (row.querySelector('.row-pay').value === '' ? null : (parseFloat(row.querySelector('.row-pay').value) || 0)),
+                cnt: (row.querySelector('.row-cnt').value === '' ? null : (parseFloat(row.querySelector('.row-cnt').value) || 0))
+            });
+        });
+        return data;
+    }
+    // pay入力は「当たり時の払い出し(合計)」として扱う（例: 10R=1500）。
+    // ユーザー定義（あなたの式）:
+    //   実質払い出し(合計) = 払い出し(合計) - カウント × R数
+    //   1R払い出し(参考)   = 実質払い出し(合計) ÷ R数
+    // ※ここで算出する 1R払い出し は「参考表示」専用。期待値計算の出玉は「1R出玉(実測)」のみを使う。
+    const DEFAULT_PAY_1C = 15;
+    const DEFAULT_COUNT = 10;
+
+    function _getCntOrDefault(row){
+        let cnt = (row.cnt === null || row.cnt === undefined || Number.isNaN(Number(row.cnt))) ? null : Number(row.cnt);
+        if (cnt === null) cnt = DEFAULT_COUNT;
+        return cnt;
+    }
+
+    function _getPayTotalOrDefault(row){
+        // 払い出し(合計) が未入力なら (1C×カウント×R) で合計払い出しを補完
+        const r = Number(row.r)||0;
+        const tr = r;
+        let payTotal = (row.pay === null || row.pay === undefined || Number.isNaN(Number(row.pay))) ? null : Number(row.pay);
+        const cnt = _getCntOrDefault(row);
+        if (payTotal === null){
+            payTotal = (DEFAULT_PAY_1C * cnt) * tr;
+        }
+        return payTotal;
+    }
+
+    function getRowPayNetTotal(row){
+        // 実質払い出し(合計) = 払い出し(合計) - カウント × R数
+        const r = Number(row.r)||0;
+        const tr = r;
+        if (tr <= 0) return 0;
+        const cnt = _getCntOrDefault(row);
+        const payTotal = _getPayTotalOrDefault(row);
+        return payTotal - (cnt * tr);
+    }
+
+    function getRowPayTotal(row){
+        // 参考用：払い出し(合計)
+        return _getPayTotalOrDefault(row);
+    }
+
+    function getRowPay1r(row){
+        const r = Number(row.r)||0;
+        const tr = r;
+        if (tr <= 0) return 0;
+        // 1R払い出し(参考) = (払い出し(合計) - カウント×R数) ÷ R数
+        return getRowPayNetTotal(row) / tr;
+    }
+
+    function getRowBonusOut(row, env){
+        // 期待値計算で使う「当たり出玉」は、環境欄の「1R出玉(実測)」のみを使用する。
+        // ※払い出し(合計)/カウントは参考表示用。期待値計算には一切混ぜない。
+        const r = Number(row.r)||0;
+        const tr = r;
+        if (tr <= 0) return 0;
+        return tr * Number(env.roundOut || 0);
+    }
+
+
+    function calcStateBonusStats(table){
+        if (!table || table.length === 0) return {avgRounds:0, avgPayout:0};
+        const totalP = table.reduce((s,r)=>s+(r.p||0),0);
+        if (totalP <= 0) return {avgRounds:0, avgPayout:0};
+        let avgRounds = 0;
+        let avgPayout = 0;
+        table.forEach(row=>{
+            const ratio = (row.p||0)/totalP;
+            const r = Number(row.r)||0;
+            const tr = r;
+            const totalPay = getRowPayTotal(row);
+            avgRounds += tr * ratio;
+            avgPayout += totalPay * ratio;
+        });
+        return {avgRounds, avgPayout};
+    }
+
+    function solveLinearSystem(A, b) {
+        const n = b.length;
+        let M = A.map((row, i) => row.slice().concat([b[i]]));
+        for (let col = 0; col < n; col++) {
+            let pivot = col;
+            for (let r = col + 1; r < n; r++) {
+                if (Math.abs(M[r][col]) > Math.abs(M[pivot][col])) pivot = r;
+            }
+            if (Math.abs(M[pivot][col]) < 1e-12) continue;
+
+            if (pivot !== col) {
+                const tmp = M[col]; M[col] = M[pivot]; M[pivot] = tmp;
+            }
+
+            const div = M[col][col];
+            for (let c = col; c <= n; c++) M[col][c] /= div;
+
+            for (let r = 0; r < n; r++) {
+                if (r === col) continue;
+                const factor = M[r][col];
+                if (Math.abs(factor) < 1e-12) continue;
+                for (let c = col; c <= n; c++) {
+                    M[r][c] -= factor * M[col][c];
+                }
+            }
+        }
+        return M.map(row => row[n]);
+    }
+
+    function invertMatrix(A){
+        const n = A.length;
+        let inv = Array.from({length:n}, ()=>Array.from({length:n}, ()=>0));
+        for (let col=0; col<n; col++){
+            let e = Array.from({length:n}, (_,i)=> i===col ? 1 : 0);
+            let x = solveLinearSystem(A.map(r=>r.slice()), e.slice());
+            for (let row=0; row<n; row++){
+                inv[row][col] = x[row];
+            }
+        }
+        return inv;
+    }
+
+    function clearTable(tableId) {
+        document.getElementById(tableId).getElementsByTagName('tbody')[0].innerHTML = "";
+        bindAutoPay1RDelegation();
+        updateAutoPay1RRef();
+    }
+
+    // --- プリセットデータ (修正版) ---
+    const presets = {
+"seven": {
+            name: "ウルトラセブン超乱舞",
+            spec: { normal: 199.9, high: 51.0, yutime: 51.0, yutimeCnt: 750, yutimeDest: 3 , yutimeHitTable: "t3" },
+            env: { roundOut: 90, supportChange: -0.2 },
+            res: { on: 1, type: 'high', count: 4 },
+            t1: [
+                {r:3, pay:300, cnt:10,s1:95, s2:0, d:2, p:15},
+                {r:3, pay:300, cnt:10,s1:55, s2:0, d:2, p:35},
+                {r:3, pay:300, cnt:10,s1:7, s2:0, d:2, p:50}
+            ],
+            t2: [
+                {r:10, pay:1000, cnt:10,s1:496, s2:0, d: 3, p:25.5},
+                {r:10, pay:1000, cnt:10,s1:95, s2:0, d: 2, p:8.6},
+                {r:10, pay:1000, cnt:10,s1:55, s2:0, d: 2, p:17.9},
+                {r:3, pay:300, cnt:10,s1:95, s2:0, d: 2, p:11.9},
+                {r:3, pay:300, cnt:10,s1:55, s2:0, d: 2, p:36.1}
+            ],
+            t3: [
+                {r:10, pay:1000, cnt:10,s1:496, s2:0, d: 3, p:25.5},
+                {r:10, pay:1000, cnt:10,s1:95, s2:0, d: 3, p:26.5},
+                {r:3, pay:300, cnt:10,s1:95, s2:0, d: 3, p:48.0}
+            ]
+        },
+        "hokuto": {
+            name: "北斗無双3 (1種2種)",
+            spec: { normal: 319.7, high: 6.17, yutime: 6.17, yutimeCnt: 255, yutimeDest: 2 },
+            env: { roundOut: 110, supportChange: -0.5 }, 
+            res: { on: 1, type: 'high', count: 3 },
+            t1: [
+                {r:3, pay:390, cnt:10,s1:10, s2:0, d:2, p:12.5},
+                {r:3, pay:390, cnt:10,s1:1, s2:0, d:2, p:87.5}
+            ],
+            t2: [
+                {r:9, pay:1200, cnt:10,s1:10, s2:0, d: 2, p:25},
+                {r:6, pay:810, cnt:10,s1:10, s2:0, d: 2, p:25},
+                {r:3, pay:420, cnt:10,s1:10, s2:0, d: 2, p:50}
+            ],
+            t3: []
+        },
+        "index": {
+            name: "とある魔術の禁書目録 (ST)",
+            spec: { normal: 319.6, high: 99.9, yutime: 319.6, yutimeCnt: 1214, yutimeDest: 2, yutimeProbSource: "normal", yutimeHitTable: "t2" },
+            env: { roundOut: 140, supportChange: -0.2 },
+            res: { on: 1, type: 'high', count: 4 },
+            t1: [
+                {r:4, pay:400, cnt:10,s1:150, s2:0, d:2, p:100}
+            ],
+            t2: [
+                {r:10, pay:1500, cnt:10,s1:150, s2:0, d: 2, p:70},
+                {r:4, pay:400, cnt:10,s1:150, s2:0, d: 2, p:30}
+            ],
+            t3: []
+        },
+        "oumi4sp": {
+            name: "P大海物語4スペシャル",
+            spec: { normal: 319.6, high: 39.7, yutime: 319.6, yutimeCnt: 350, yutimeDest: 2, yutimeProbSource: "normal", yutimeHitTable: "t1" },
+            env: { roundOut: 140, supportChange: -0.5 , supportHitTable: 'inherit' },
+            res: { on: 0, type: 'high', count: 0 },
+            t1: [
+                {r:10, pay:1500, cnt:10,v:0, s1:9999, s2:0, d:2, p:52},
+                {r:10, pay:1500, cnt:10,v:0, s1:0, s2:100, d: 2, p:48}
+            ],
+            t2: [
+                {r:10, pay:1500, cnt:10,v:0, s1:9999, s2:0, d: 2, p:52},
+                {r:10, pay:1500, cnt:10,v:0, s1:0, s2:120, d: 2, p:48}
+            ],
+            t3: []
+        },
+        "rider": {
+            name: "仮面ライダー轟音 (ST+時短混合)",
+            spec: { normal: 319.9, high: 74.7, yutime: 319.9, yutimeCnt: 1200, yutimeDest: 2 },
+            env: { roundOut: 140, supportChange: -0.5 },
+            res: { on: 0, type: 'high', count: 4 },
+            t1: [
+                {r:10, pay:1500, cnt:10,s1:120, s2:120, d:2, p:1},
+                {r:3, pay:450, cnt:10,s1:120, s2:120, d:2, p:10},
+                {r:3, pay:450, cnt:10,s1:120, s2:0, d:2, p:39},
+                {r:3, pay:450, cnt:10,s1:0, s2:120, d: 2, p:50}
+            ],
+            t2: [
+                {r:10, pay:1500, cnt:10,s1:120, s2:120, d: 2, p:35},
+                {r:10, pay:1500, cnt:10,s1:120, s2:0, d: 2, p:45},
+                {r:2, pay:300, cnt:10,s1:120, s2:120, d: 2, p:5},
+                {r:2, pay:300, cnt:10,s1:120, s2:0, d: 2, p:15}
+            ],
+            t3: []
+        }
+,
+        "agness99": {
+            name: "P大海物語4SPアグネス",
+            spec: { normal: 99.9, high: 19.5, yutime: 99.9, yutimeCnt: 299, yutimeDest: 2 },
+            env: { roundOut: 108, supportChange: 0 },
+            res: { on: 0, type: 'high', count: 4 },
+            // 特図1（通常/ヘソ・電チュー共通）
+            t1: [
+                { r: 10, s1: 10, s2: 90, d: 2, p: 4, pay: 1080, cnt: 9 },
+                { r: 6,  s1: 10, s2: 40, d: 2, p: 60, pay: 648, cnt: 9 },
+                { r: 4,  s1: 10, s2: 40, d: 2, p: 6, pay: 432, cnt: 9 },
+                { r: 4,  s1: 10, s2: 15, d: 2, p: 30, pay: 432, cnt: 9 }
+            ],
+            // 特図2（RUSH/ST）※当たり後も同様のST+時短構造
+            t2: [
+                { r: 10, s1: 10, s2: 90, d: 2, p: 4, pay: 1080, cnt: 9 },
+                { r: 6,  s1: 10, s2: 40, d: 2, p: 60, pay: 648, cnt: 9 },
+                { r: 4,  s1: 10, s2: 40, d: 2, p: 6, pay: 432, cnt: 9 },
+                { r: 4,  s1: 10, s2: 15, d: 2, p: 30, pay: 432, cnt: 9 }
+            ],
+            t3: []
+        },
+        "devilman": {
+            name: "Pデビルマン～疾風迅雷～",
+            spec: { normal: 319.69, high: 2.04, yutime: 2.04, yutimeCnt: 959, yutimeDest: 2 },
+            env: { roundOut: 110, supportChange: 0 },
+            res: { on: 1, type: 'high', count: 1 },
+            // 特図1
+            t1: [
+                { r: 5, s1: 3, s2: 0, d: 2, p: 50, pay: 550, cnt: 10 },
+                { r: 2, s1: 3, s2: 0, d: 2, p: 10, pay: 220, cnt: 10 },
+                { r: 5, s1: 0, s2: 0, d: 1, p: 40, pay: 550, cnt: 10 }
+            ],
+            // 特図2
+            t2: [
+                { r: 7, s1: 3, s2: 0, d: 2, p: 30, pay: 770, cnt: 10 },
+                { r: 3, s1: 3, s2: 0, d: 2, p: 70, pay: 330, cnt: 10 }
+            ],
+            t3: []
+        }
+
+    };
+
+    // --- プリセット管理 ---
+    const PRESET_KEY = 'yutime_presets';
+    let userPresets = {};
+
+    function initPresets() {
+        const saved = localStorage.getItem(PRESET_KEY);
+        if (saved) userPresets = JSON.parse(saved);
+        updatePresetSelect();
+    }
+
+    function updatePresetSelect() {
+        const select = document.getElementById('preset-select');
+        select.innerHTML = '<option value="">-- 機種を選択 --</option>';
+        
+        const groupDef = document.createElement('optgroup');
+        groupDef.label = "デフォルト";
+        for (let key in presets) {
+            let opt = document.createElement('option');
+            opt.value = 'def:' + key;
+            opt.text = presets[key].name;
+            groupDef.appendChild(opt);
+        }
+        select.appendChild(groupDef);
+
+        const groupUser = document.createElement('optgroup');
+        groupUser.label = "ユーザー保存";
+        for (let key in userPresets) {
+            let opt = document.createElement('option');
+            opt.value = 'user:' + key;
+            opt.text = key;
+            groupUser.appendChild(opt);
+        }
+        select.appendChild(groupUser);
+    }
+
+    function loadPreset() {
+        const val = document.getElementById('preset-select').value;
+        if (!val) return;
+        const [type, key] = val.split(':');
+        const data = (type === 'def') ? presets[key] : userPresets[key];
+        if (!data) return;
+
+        document.getElementById('spec-prob-normal').value = data.spec.normal;
+        document.getElementById('spec-prob-high').value = data.spec.high;
+        document.getElementById('spec-prob-yutime').value = data.spec.yutime;
+        document.getElementById('spec-yutime-count').value = data.spec.yutimeCnt;
+        document.getElementById('spec-yutime-dest').value = data.spec.yutimeDest;
+        document.getElementById('spec-yutime-prob-source').value = data.spec.yutimeProbSource || 'custom';
+        document.getElementById('spec-yutime-hit-table').value = data.spec.yutimeHitTable || 't2';
+        document.getElementById('spec-yutime-scope').value = data.spec.yutimeScope || 'after';
+
+        document.getElementById('env-support-change').value = data.env.supportChange;
+        document.getElementById('res-calc-on').value = data.res.on;
+        document.getElementById('res-prob-type').value = data.res.type;
+        document.getElementById('res-count').value = data.res.count;
+        if (document.getElementById('res-hit-table')) document.getElementById('res-hit-table').value = data.res.hitTable || 'inherit';
+
+        clearTable('table-spec1');
+        data.t1.forEach(row => addRow('table-spec1', row));
+        clearTable('table-spec2');
+        data.t2.forEach(row => addRow('table-spec2', row));
+        clearTable('table-spec3');
+        if(data.t3) data.t3.forEach(row => addRow('table-spec3', row));
+
+        bindAutoPay1RDelegation();
+        updateAutoPay1RRef();
+    }
+
+    function savePreset() {
+        const name = document.getElementById('preset-name').value;
+        if (!name) { alert('名前を入力してください'); return; }
+        const data = {
+            name: name,
+            spec: {
+                normal: document.getElementById('spec-prob-normal').value,
+                high: document.getElementById('spec-prob-high').value,
+                yutime: document.getElementById('spec-prob-yutime').value,
+                yutimeCnt: document.getElementById('spec-yutime-count').value,
+                yutimeDest: parseInt(document.getElementById('spec-yutime-dest').value),
+                yutimeProbSource: document.getElementById('spec-yutime-prob-source').value,
+                yutimeHitTable: document.getElementById('spec-yutime-hit-table').value,
+                yutimeScope: document.getElementById('spec-yutime-scope').value,
+            yutimeScope: document.getElementById('spec-yutime-scope').value,
+            },
+            env: {
+                roundOut: document.getElementById('env-round-out').value,
+                supportChange: document.getElementById('env-support-change').value,
+            },
+            res: {
+                on: document.getElementById('res-calc-on').value,
+                type: document.getElementById('res-prob-type').value,
+                count: document.getElementById('res-count').value,
+                hitTable: (document.getElementById('res-hit-table')?.value || 'inherit')
+            },
+            t1: getTableData('table-spec1'),
+            t2: getTableData('table-spec2'),
+            t3: getTableData('table-spec3')
+        };
+        userPresets[name] = data;
+        localStorage.setItem(PRESET_KEY, JSON.stringify(userPresets));
+        updatePresetSelect();
+        alert('保存しました');
+    }
+
+    function deletePreset() {
+        const val = document.getElementById('preset-select').value;
+        if (!val || val.startsWith('def:')) { alert('ユーザー保存データのみ削除できます'); return; }
+        const key = val.split(':')[1];
+        if(confirm(key + ' を削除しますか？')) {
+            delete userPresets[key];
+            localStorage.setItem(PRESET_KEY, JSON.stringify(userPresets));
+            updatePresetSelect();
+        }
+    }
+
+    // --- 計算ロジック ---
+    function shouldApplySupport(applyMode, context, row) {
+        // 電サポ増減は常に適用
+        return true;
+    }
+
+    function hitProb(denom, turns) {
+        return 1 - Math.pow(1 - 1/denom, turns);
+    }
+    
+    function calcAvgRot(denom, turns) {
+        if (turns <= 0) return 0;
+        if (turns > 1000) return denom; // 次回までループ
+        
+        let sumRot = 0;
+        let remainP = 1.0;
+        const hit = 1/denom;
+        for(let k=1; k<=turns; k++){
+            sumRot += k * remainP * hit;
+            remainP *= (1 - hit);
+        }
+        sumRot += turns * remainP;
+        return sumRot;
+    }
+
+    // 2段階電サポの当選・回転数計算
+    // - 分母が小さい(=当たりやすい)区間を優先消化
+    // - 分母が同じなら tier が高い(上位扱い)区間を優先消化
+    // turns>1000 は『ほぼ無限(当たるまで)』として扱う
+    function calcTwoStageSupport(denomS1, turnsS1, tierS1, denomS2, turnsS2, tierS2, denomS3=null, turnsS3=0, tierS3=0) {
+        const res = {
+            hitS1: 0, hitS2: 0,
+            hitS3: 0,
+        avgRotS1: 0, avgRotS2: 0,
+            avgRotS3: 0,
+        playRotS1: 0, playRotS2: 0,
+            playRotS3: 0,
+        reachBeforeS1: 1, reachBeforeS2: 1,
+            reachBeforeS3: 0,
+        totalHit: 0, totalAvg: 0
+        };
+        const stages = [];
+        if ((turnsS1 || 0) > 0) stages.push({ key: 's1', denom: denomS1, turns: turnsS1, tier: tierS1 });
+        if ((turnsS2 || 0) > 0) stages.push({ key: 's2', denom: denomS2, turns: turnsS2, tier: tierS2 });
+        if ((turnsS3 || 0) > 0) stages.push({ key: 's3', denom: denomS3, turns: turnsS3, tier: tierS3 });
+        stages.sort((a, b) => {
+            const da = a.denom ?? Number.POSITIVE_INFINITY;
+            const db = b.denom ?? Number.POSITIVE_INFINITY;
+            if (da !== db) return da - db;
+            return (b.tier || 0) - (a.tier || 0);
+        });
+        let reach = 1.0;
+        for (const st of stages) {
+            const denom = st.denom;
+            const turns = st.turns;
+            const key = st.key;
+            if (key === 's1') res.reachBeforeS1 = reach;
+            if (key === 's2') res.reachBeforeS2 = reach;
+            if (key === 's3') res.reachBeforeS3 = reach;
+            let h = 0;
+            let a = 0;
+            if (turns > 1000) { h = 1; a = denom; }
+            else { h = hitProb(denom, turns); a = calcAvgRot(denom, turns); }
+            if (key === 's1') { res.hitS1 = h; res.avgRotS1 = a; res.playRotS1 = reach * a; }
+            if (key === 's2') { res.hitS2 = h; res.avgRotS2 = a; res.playRotS2 = reach * a; }
+            if (key === 's3') { res.hitS3 = h; res.avgRotS3 = a; res.playRotS3 = reach * a; }
+            reach *= (1 - h);
+        }
+        res.totalHit = 1 - reach;
+        res.totalAvg = res.playRotS1 + res.playRotS2 + res.playRotS3;
+        return res;
+    }
+
+    function destToState(dest) {
+        // value固定: 1=通常 / 2=下位RUSH / 3=上位RUSH
+        if (dest == 1) return 1;
+        if (dest == 2) return 2;
+        if (dest == 3) return 3;
+        return 1; // 念のため通常へ
+    }
+
+    
+    function calcRightExpectationsWithDebug(spec, tables, env) {
+        // 右打ち状態: 2=下位RUSH(特図2) / 3=上位RUSH(特図3)
+        const states = [2, 3];
+        const modes = {};
+        const debug = {
+            state2: { rows: [], next: null, out: null, sumNextProb: null },
+            state3: { rows: [], next: null, out: null, sumNextProb: null }
+        };
+
+        states.forEach(sIdx => {
+            const table = (sIdx === 2) ? (tables.t2 || []) : (tables.t3 || []);
+            if (!table || table.length === 0) {
+                modes[sIdx] = { out: 0, next: {2:0, 3:0} };
+                debug['state'+sIdx] = { rows: [], next: {2:0,3:0}, out: 0, sumNextProb: 0 };
+                return;
+            }
+
+            let avgOut = 0; // 当たり出玉 + 電サポ増減（期待値）
+            let nextProbs = {2:0, 3:0}; // 次状態（右打ちのみ）
+
+            const totalP = table.reduce((sum, row) => sum + (row.p || 0), 0);
+            if (totalP <= 0) {
+                modes[sIdx] = { out: 0, next: {2:0, 3:0} };
+                debug['state'+sIdx] = { rows: [], next: {2:0,3:0}, out: 0, sumNextProb: 0 };
+                return;
+            }
+
+            table.forEach(row => {
+                const ratio = (row.p || 0) / totalP;
+
+                // 当たり出玉（合計払い出し入力があれば優先）
+                const bonusOut = getRowBonusOut(row, env);
+
+                // 電サポ（確変/ST + 時短 + 任意の追加区間）
+                const s1 = Number(row.s1 || 0);
+                const s2 = Number(row.s2 || 0);
+                const s3 = Number(row.s3 || 0);
+
+                const sup = calcTwoStageSupport(spec.high, s1, 3, spec.normal, s2, 1, spec.high, s3, 2);
+                const pSupportHit = sup.totalHit;
+                const playedRot = sup.totalAvg;
+
+                // 残保留（必要なら）
+                let pResHit = 0;
+                const reachRes = (1.0 - pSupportHit);
+                if (reachRes > 0 && env.resOn) {
+                    const resProb = (env.resType === 'high') ? (1 / spec.high) : (1 / spec.normal);
+                    pResHit = reachRes * (1 - Math.pow(1 - resProb, env.resCount));
+                }
+
+                const pNoHit = Math.max(0, 1 - pSupportHit - pResHit);
+
+                // 電サポ増減（期待回転数で加算）
+                let supportOut = 0;
+                if (shouldApplySupport(null, 'rush', row)) {
+                    supportOut = Number(env.supportChange) * playedRot;
+                }
+
+                avgOut += (bonusOut + supportOut) * ratio;
+
+                // 遷移先（通常=1, 下位=2, 上位=3）
+                let destSupport = destToState(row.d);
+                let destRes = destSupport;
+
+                const rht = env.resHitTable || 'inherit';
+                if (rht === 't1') destRes = 1;
+                else if (rht === 't2') destRes = 2;
+                else if (rht === 't3') destRes = 3;
+
+                // 次状態確率（右打ちのみを保持）
+                if (destSupport === 2 || destSupport === 3) nextProbs[destSupport] += ratio * pSupportHit;
+                if (destRes === 2 || destRes === 3) nextProbs[destRes] += ratio * pResHit;
+
+                debug['state' + sIdx].rows.push({
+                    r: row.r, s1: row.s1, s2: row.s2, d: row.d, p: row.p,
+                    ratio: ratio,
+                    hitSupport: pSupportHit, hitRes: pResHit, noHit: pNoHit,
+                    avgRotSupport: playedRot
+                });
+            });
+
+            modes[sIdx] = { out: avgOut, next: nextProbs };
+            const sumNext = (nextProbs[2] || 0) + (nextProbs[3] || 0);
+            debug['state' + sIdx].next = nextProbs;
+            debug['state' + sIdx].out = avgOut;
+            debug['state' + sIdx].sumNextProb = sumNext;
+        });
+
+        // 2状態の連立方程式: E = out + P * E
+        const P22 = modes[2].next[2] || 0;
+        const P23 = modes[2].next[3] || 0;
+        const P32 = modes[3].next[2] || 0;
+        const P33 = modes[3].next[3] || 0;
+
+        const A = [
+            [1 - P22,    -P23],
+            [  -P32,  1 - P33]
+        ];
+        const b = [modes[2].out || 0, modes[3].out || 0];
+        const E = solveLinearSystem(A, b);
+
+        const expRight = {1: 0, 2: E[0], 3: E[1]};
+
+        return {
+            expRight: expRight,
+            debugRight: debug
+        };
+    }
+
+
+
+function calculate() {
+        const spec = {
+            normal: parseFloat(document.getElementById('spec-prob-normal').value),
+            high: parseFloat(document.getElementById('spec-prob-high').value),
+            yutime: parseFloat(document.getElementById('spec-prob-yutime').value),
+            yutimeCnt: parseInt(document.getElementById('spec-yutime-count').value),
+            yutimeDest: parseInt(document.getElementById('spec-yutime-dest').value),
+            yutimeProbSource: document.getElementById('spec-yutime-prob-source').value,
+            yutimeHitTable: document.getElementById('spec-yutime-hit-table').value,
+                yutimeScope: document.getElementById('spec-yutime-scope').value,
+            yutimeScope: document.getElementById('spec-yutime-scope').value
+        };
+        const env = {
+            remaining: parseInt(document.getElementById('env-remaining').value),
+            rotation: parseFloat(document.getElementById('env-rotation').value),
+            exchange: parseFloat(document.getElementById('env-exchange').value),
+            holdBalls: parseFloat(document.getElementById('env-hold-balls').value) || 0,
+            roundOut: parseFloat(document.getElementById('env-round-out').value),
+            supportChange: parseFloat(document.getElementById('env-support-change').value),
+            resOn: document.getElementById('res-calc-on').value == "1",
+            resType: document.getElementById('res-prob-type').value,
+            resCount: parseInt(document.getElementById('res-count').value),
+            resHitTable: (document.getElementById('res-hit-table')?.value || 'inherit'),
+        };
+        const hourly = {
+            speedNormal: parseInt(document.getElementById('speed-normal').value),
+            speedHit: parseInt(document.getElementById('speed-hit').value),
+            timeRemaining: parseInt(document.getElementById('time-remaining').value)
+        };
+        const tables = {
+            t1: getTableData('table-spec1'),
+            t2: getTableData('table-spec2'),
+            t3: getTableData('table-spec3')
+        };
+
+        const ballsPerRot = 250 / env.rotation;
+        const avgPreRot = calcAvgRot(spec.normal, env.remaining);
+        const totalInvestBalls = ballsPerRot * avgPreRot;
+        const holdUsed = Math.min(env.holdBalls || 0, totalInvestBalls);
+        const cashUsed = Math.max(0, totalInvestBalls - holdUsed);
+        const totalInvestYen = holdUsed * env.exchange + cashUsed * 4.0;
+        const costPerBall = (totalInvestBalls > 0) ? (totalInvestYen / totalInvestBalls) : env.exchange;
+
+        const yutimeProb = Math.pow(1 - 1/spec.normal, env.remaining);
+        const hitNormalProb = 1 - yutimeProb; 
+
+        const rushCalc = calcRightExpectationsWithDebug(spec, tables, env);
+        const expRight = rushCalc.expRight;
+
+        // 右実効1R払い出し（参考）
+        try {
+            const nxt2 = rushCalc.debugRight?.state2?.next || {};
+            const nxt3 = rushCalc.debugRight?.state3?.next || {};
+            const Q = [
+                [Number(nxt2[2] || 0), Number(nxt2[3] || 0)],
+                [Number(nxt3[2] || 0), Number(nxt3[3] || 0)]
+            ];
+            const A = [
+                [1 - Q[0][0],    -Q[0][1]],
+                [  -Q[1][0],  1 - Q[1][1]]
+            ];
+            const F = invertMatrix(A); // 2x2
+
+            let startIdx = null;
+            if (spec.yutimeDest === 2) startIdx = 0; // 下位RUSH
+            else if (spec.yutimeDest === 3) startIdx = 1; // 上位RUSH
+
+            const rightEl = document.getElementById('spec-auto-pay1r-right');
+            if (!rightEl) throw new Error('no element');
+
+            if (startIdx === null) {
+                rightEl.value = '-';
+            } else {
+                const visits = F[startIdx]; // [visitLower, visitUpper]
+                const st2 = calcStateBonusStats(tables.t2);
+                const st3 = calcStateBonusStats(tables.t3);
+
+                const totalRounds = (Number(visits[0] || 0) * (st2.avgRounds || 0)) + (Number(visits[1] || 0) * (st3.avgRounds || 0));
+                const totalPayout = (Number(visits[0] || 0) * (st2.avgPayout || 0)) + (Number(visits[1] || 0) * (st3.avgPayout || 0));
+                const rightPay1r = (totalRounds > 0) ? (totalPayout / totalRounds) : 0;
+
+                rightEl.value = (rightPay1r > 0) ? rightPay1r.toFixed(1) : '-';
+            }
+        } catch (e) {
+            const __right = document.getElementById('spec-auto-pay1r-right'); if (__right) __right.value = '-';
+        }
+
+
+        // 初当たり期待値（特図1）
+        let expNormalHit = 0;
+        let debugT1 = [];
+        let totalP1 = tables.t1.reduce((sum, r) => sum + r.p, 0);
+
+        if (totalP1 > 0) {
+            tables.t1.forEach(row => {
+                const ratio = row.p / totalP1;
+
+                // 当たり出玉は ratio のみで加重（hitS1/hitS2 で薄めない）
+                let val = getRowBonusOut(row, env);
+
+                const s1 = row.s1;
+                const s2 = row.s2;
+
+                const supT1 = calcTwoStageSupport(spec.high, s1, 2, spec.normal, s2, 1);
+                const totalHit = supT1.totalHit;
+                const totalAvg = supT1.totalAvg;
+
+                let hitRes = 0;
+                if (env.resOn && totalHit < 1.0) {
+                    const resProb = (env.resType === 'high') ? (1/spec.high) : (1/spec.normal);
+                    hitRes = (1 - totalHit) * (1 - Math.pow(1 - resProb, env.resCount));
+                }
+
+                debugT1.push({
+                    r: row.r, s1: row.s1, s2: row.s2, d: row.d, p: row.p,
+                    totalHit: totalHit, totalAvg: totalAvg, hitRes: hitRes
+                });
+
+                // 電サポ増減は期待回転数(totalAvg)で加算（確率で薄めない）
+                if (shouldApplySupport(null, 't1', row)) {
+                    val += totalAvg * env.supportChange;
+                }
+
+                const destState = destToState(row.d);
+
+                // 残保留当選の特図を明示できるようにする（通常計算側）
+                let destStateRes = destState;
+                const rht = env.resHitTable || 'inherit';
+                if (rht === 't1') destStateRes = 0;
+                else if (rht === 't2') destStateRes = destToState(2);
+                else if (rht === 't3') destStateRes = destToState(3);
+
+                if (destState > 0) {
+                    // 初当たり後の遷移がRUSH側（特図2/3）
+                    val += (totalHit) * expRight[destState];
+                    if (destStateRes > 0) val += (hitRes) * expRight[destStateRes];
+                } else {
+                    // ★ 通常戻り(d=0)でも、時短/電サポ中の当たりは「特図2」として扱う
+                    // （大海4SPなど：時短当たりで電サポ120が付く想定）
+                    const tok2State = destToState(2); // = 1
+                    val += (totalHit) * expRight[tok2State];
+
+                    // 残保留当選も同様（inheritなら tok2 扱いに寄せる）
+                    const tok2StateRes = (rht === 'inherit') ? tok2State : destStateRes;
+                    if (tok2StateRes > 0) val += (hitRes) * expRight[tok2StateRes];
+                }
+
+                expNormalHit += val * ratio;
+            });
+        }
+
+        // 遊タイム期待値
+        let expYutime = 0;
+
+        let ytDenom = spec.yutime;
+        if (spec.yutimeProbSource === 'normal') ytDenom = spec.normal;
+        if (spec.yutimeProbSource === 'high') ytDenom = spec.high;
+
+        const ytProb = 1/ytDenom;
+        const ytCount = spec.yutimeCnt;
+        const ytThrough = Math.pow(1 - ytProb, ytCount);
+        const ytHit = 1 - ytThrough;
+        const ytAvgRot = calcAvgRot(ytDenom, ytCount);
+
+        if (shouldApplySupport(null, 'yutime', null)) {
+            expYutime += ytAvgRot * env.supportChange;
+        }
+
+        let ytHitTable = spec.yutimeHitTable || 'inherit';
+
+        // 遊タイム中に当選した「その当たりの出玉」を加味する（ここが抜けると遊タイム期待値が不自然に低くなる）
+        const getRowsByTable = (tbl) => {
+            // Use the machine template tables (not env.*Rows debug caches) so遊タイム中の当り出玉が正しく反映される
+            if (tbl === 't3') return tables.t3 || [];
+            if (tbl === 't2') return tables.t2 || [];
+            return tables.t1 || [];
+        };
+        const ytRows = getRowsByTable(ytHitTable);
+        const ytBonusOut = ytRows.reduce((sum, row) => {
+            const ratio = toRatio(row.p || 0);
+            const r = (row.r || 0);
+            const v = (row.v || 0); // V入賞などで1R相当を足す場合に対応（テンプレ次第）
+            return sum + ratio * (r + v) * env.roundOut;
+        }, 0);
+
+        let afterYtHit = 0;
+        if (ytHitTable === 'inherit' || ytHitTable === 't1') {
+            // 通常当たりと同じ扱い（当たり→(必要なら)右打ちへ、まで全部込み）
+            afterYtHit = expNormalHit;
+        } else {
+            // 遊タイム後の遷移先（右打ち状態）の期待値
+            const ytDestRaw = (spec.yutimeDest != null) ? spec.yutimeDest : (ytHitTable === 't3' ? 3 : 1);
+            const destState = destToState(ytDestRaw);
+            afterYtHit = (destState > 0 ? expRight[destState] : 0);
+
+            // 遊タイム当選の期待値範囲：当選した「その当たり(1回目)」を含めるか
+            const ytScope = spec.yutimeScope || 'after'; // 'after' | 'include'
+            if (ytScope === 'include') afterYtHit += ytBonusOut;
+        }
+
+        expYutime += ytHit * afterYtHit;
+
+        const totalOutBalls = (hitNormalProb * expNormalHit) + (yutimeProb * expYutime);
+        const totalOutYen = totalOutBalls * env.exchange;
+        const expectedValue = totalOutYen - totalInvestYen;
+        const border = (totalOutYen > 0) ? (avgPreRot * 250 * costPerBall / totalOutYen) : 999;
+        const timeNormal = (hourly.speedNormal > 0) ? (avgPreRot / hourly.speedNormal * 60) : 0;
+        const speedHit = (hourly.speedHit > 0) ? hourly.speedHit : 10000;
+        const timeHit = (speedHit > 0) ? (totalOutBalls / speedHit * 60) : 0;
+        const timeDigest = timeNormal + timeHit;
+        
+// 閉店欠損（分布ベース：継続率/出玉分布 + 大当たり時速で「取り切れない平均玉数」を概算）
+const timeRemainMin = isFinite(hourly.timeRemaining) ? hourly.timeRemaining : 0;
+let closeLossYen = 0;
+if (timeRemainMin > 0 && speedHit > 0) {
+    // 通常時消化を差し引いた「大当たり消化に使える時間」から、取り切れる最大玉数を算出
+    const capBalls = Math.max(0, (timeRemainMin - timeNormal)) / 60 * speedHit;
+
+    const tables = {
+        t1: getTableData('table-spec1') || [],
+        t2: getTableData('table-spec2') || [],
+        t3: getTableData('table-spec3') || [],
+    };
+
+    const sumW = (arr) => arr.reduce((s, r) => s + (Number(r.p) || 0), 0);
+
+    function sampleRow(arr) {
+        const total = sumW(arr);
+        if (total <= 0) return null;
+        let x = Math.random() * total;
+        for (const r of arr) {
+            x -= (Number(r.p) || 0);
+            if (x <= 0) return r;
+        }
+        return arr[arr.length - 1] || null;
+    }
+
+    function bonusOutOfRow(row) {
+        const R = Number(row.r) || 0;
+        return R * (Number(env.roundOut) || 0); // 期待値の出玉は「1R出玉（実測）」を使用（参考払い出しとは分離済み）
+    }
+
+    function pContinueFromRow(row) {
+        const s1 = Number(row.s1) || 0;
+        const s2 = Number(row.s2) || 0;
+
+        // 電サポ中当選確率（高確 s1 回 + 通常 s2 回）
+        const sup = calcTwoStageSupport(spec.high, s1, 2, spec.normal, s2, 1);
+        let pHit = sup.totalHit;
+
+        // 残保留（設定ONの場合）
+        if (env.resOn && pHit < 1.0 && (env.resCount || 0) > 0) {
+            const resProb = (env.resType === 'high') ? (1 / spec.high) : (1 / spec.normal);
+            const pRes = 1 - Math.pow(1 - resProb, env.resCount);
+            pHit = Math.min(1, pHit + (1 - pHit) * pRes);
+        }
+        return pHit;
+    }
+
+    function nextTableKeyFromRow(row) {
+        const d = parseInt(row.d, 10) || 1;
+        if (d === 1) return 't1';
+        if (d === 2) return 't2';
+        return 't3';
+    }
+
+    function simulateChain(startKey) {
+        let totalBalls = 0;
+        let key = startKey;
+        for (let guard = 0; guard < 200; guard++) {
+            const arr = tables[key] || [];
+            if (!arr.length) break;
+            const row = sampleRow(arr);
+            if (!row) break;
+
+            totalBalls += bonusOutOfRow(row);
+
+            const pCont = pContinueFromRow(row);
+            if (Math.random() >= pCont) break;
+
+            key = nextTableKeyFromRow(row);
+        }
+        return totalBalls;
+    }
+
+    // 打ち出し時点（ヘソ開始 or 遊タイム到達→遊タイム当たり先）の混合を使う
+    const ytTbl = document.getElementById('spec-yutime-hit-table')?.value || 't2';
+    const pNorm = hitNormalProb;
+    const pY = yutimeProb;
+    const mix = pNorm + pY;
+
+    const N_SIM = 3000; // 体感の軽さ優先（必要ならデバッグで増やせる）
+    let lostSum = 0;
+
+    if (capBalls <= 0) {
+        // そもそも当たり消化時間が取れない場合：得た玉は全て欠損扱い（ただし最大は実際の獲得玉数）
+        for (let i = 0; i < N_SIM; i++) {
+            let balls = 0;
+            if (mix > 0) {
+                const r = Math.random() * mix;
+                balls = (r < pNorm) ? simulateChain('t1') : simulateChain(ytTbl);
+            }
+            lostSum += balls;
+        }
+    } else {
+        for (let i = 0; i < N_SIM; i++) {
+            let balls = 0;
+            if (mix > 0) {
+                const r = Math.random() * mix;
+                balls = (r < pNorm) ? simulateChain('t1') : simulateChain(ytTbl);
+            }
+            lostSum += Math.max(0, balls - capBalls);
+        }
+    }
+
+    const lostBallsAvg = lostSum / N_SIM;
+    closeLossYen = lostBallsAvg * env.exchange;
+}
+const expectedValueAdj = expectedValue - closeLossYen;
+
+        document.getElementById('res-expected-value').innerText = Math.floor(expectedValueAdj).toLocaleString() + " 円";
+        document.getElementById('res-border').innerText = border.toFixed(1);
+        document.getElementById('res-avg-out').innerText = Math.floor(totalOutBalls).toLocaleString();
+        document.getElementById('res-time').innerText = Math.floor(timeDigest);
+        
+        const timeForWage = (timeRemainMin > 0) ? Math.min(timeDigest, timeRemainMin) : timeDigest;
+        const hourlyWage = (timeForWage > 0) ? (expectedValueAdj / (timeForWage / 60)) : 0;
+        document.getElementById('res-hourly').innerText = Math.floor(hourlyWage).toLocaleString();
+        document.getElementById('res-hourly-area').style.display = (timeForWage > 0) ? 'block' : 'none';
+
+        // デバッグ表示
+        const dbgOn = document.getElementById('debug-on');
+        const dbgArea = document.getElementById('debug-area');
+        if (dbgOn && dbgArea) {
+            if (dbgOn.checked) {
+                const debugObj = {
+                    input: {
+                        remaining: env.remaining,
+                        rotationPer1k: env.rotation,
+                        exchange: env.exchange,                        roundOut: env.roundOut,
+                        supportChange: env.supportChange,
+                                                resOn: env.resOn,
+                        resType: env.resType,
+                        resCount: env.resCount,
+                        resHitTable: env.resHitTable,
+                        yutimeHitTable: spec.yutimeHitTable,
+                        yutimeCnt: spec.yutimeCnt,
+                        yutimeDest: spec.yutimeDest
+                    },
+                    reachYutimeProb: yutimeProb,
+                    hitNormalProb: hitNormalProb,
+                    avgPreRot: avgPreRot,
+                    investYen: totalInvestYen,
+                    outBalls: totalOutBalls,
+                    outYen: totalOutYen,
+                    expectedValue: expectedValue,
+                    exp: { expNormalHit, expYutime, expRight },
+                    rushDebug: rushCalc.debugRight,
+                    yutime: { probSource: spec.yutimeProbSource, denom: ytDenom, cnt: ytCount, hit: ytHit, avgRot: ytAvgRot, hitTable: spec.yutimeHitTable, dest: spec.yutimeDest },
+                    t1Rows: debugT1
+                };
+                dbgArea.style.display = 'block';
+                dbgArea.textContent = JSON.stringify(debugObj, null, 2);
+            } else {
+                dbgArea.style.display = 'none';
+                dbgArea.textContent = '';
+            }
+        }
+    }
+
+    
+    // --- 自動参照値(1R払い出し)の再計算フック ---
+    // 行を直接編集しても必ず反映されるよう、テーブル側でイベント委譲も行う
+    function bindAutoPay1RDelegation(){
+        const tableIds = ['table-spec1','table-spec2','table-spec3'];
+        tableIds.forEach(tid=>{
+            const t = document.getElementById(tid);
+            if(!t) return;
+            // 既にバインド済みなら二重登録しない
+            if(t.dataset.autoPayBound === '1') return;
+            const handler = (e)=>{
+                const el = e.target;
+                if(!el) return;
+                // 該当クラスの入力が動いたら再計算
+                if(el.classList && (el.classList.contains('row-r') || el.classList.contains('row-v') || el.classList.contains('row-p') ||
+                    el.classList.contains('row-pay') || el.classList.contains('row-cnt') ||
+                    el.classList.contains('row-d') || el.classList.contains('row-s1') ||
+                    el.classList.contains('row-s2'))){
+                    updateAutoPay1RRef();
+                }
+            };
+            t.addEventListener('input', handler, true);
+            t.addEventListener('change', handler, true);
+            t.dataset.autoPayBound = '1';
+        });
+    }
+
+window.onload = function() {
+        initPresets();
+        bindAutoPay1RDelegation();
+        updateAutoPay1RRef();
+    
+
+updatePctSums();
+    // 自動1R払い出し（参考）は、表入力だけでなく確率/残保留設定の変更でも変わるため監視する
+[
+    'spec-prob-normal','spec-prob-high','spec-yutime-hit-table','spec-yutime-dest','env-remaining',
+    'res-calc-on','res-prob-type','res-count','res-hit-table'
+].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('input', updateAutoPay1RRef);
+    el.addEventListener('change', updateAutoPay1RRef);
+});
+    };
+</script>
+</body>
+</html>
