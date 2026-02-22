@@ -2289,11 +2289,16 @@
         });
 
         // checkboxes
-        const chkIds = ["chkModeAtLeast", "chkCeilShort"];
+        const chkIds = ["chkModeAtLeast", "chkCeilShort", "chkGameCeil"];
         chkIds.forEach(id => {
           const el = document.getElementById(id);
           if (el) U[id] = !!el.checked;
         });
+
+        // Save table editor state
+        U.tblData = JSON.parse(JSON.stringify(state.tbl.data));
+        U.tableType = document.getElementById("tableType")?.value || "";
+        U.contextName = document.getElementById("contextName")?.value || "";
 
         return dataModel;
       }
@@ -2309,6 +2314,21 @@
           if (el.type === "checkbox") el.checked = !!U[id];
           else el.value = U[id];
         });
+
+        // Restore table editor state
+        if (U.tblData) {
+          state.tbl.data = JSON.parse(JSON.stringify(U.tblData));
+          if (U.tableType) {
+            const tt = document.getElementById("tableType");
+            if (tt) tt.value = U.tableType;
+          }
+          if (U.contextName) {
+            const cn = document.getElementById("contextName");
+            if (cn) cn.value = U.contextName;
+          }
+          renderTable();
+          refreshContextSelect();
+        }
       }
 
       document.getElementById("savePreset")?.addEventListener("click", () => {
@@ -3247,11 +3267,12 @@
           const n = +k; if (!isFinite(n)) continue;
           sum += (+cycleP[k] || 0);
         }
-        if (!(sum > 0) || sum >= 0.999999) return cycleP;
-        const last = (maxCycle && isFinite(maxCycle) && maxCycle > 0) ? maxCycle : Math.max(0, ...Object.keys(cycleP).map(k => +k).filter(n => isFinite(n)));
-        if (last > 0) {
-          cycleP[last] = (+cycleP[last] || 0) + (1.0 - sum);
-        }
+        if (sum >= 0.999999) return cycleP;
+
+        let last = (maxCycle && isFinite(maxCycle) && maxCycle > 0) ? maxCycle : Math.max(0, ...Object.keys(cycleP).map(k => +k).filter(n => isFinite(n)));
+        if (last <= 0) last = 1; // Fallback to 1 if empty
+
+        cycleP[last] = (+cycleP[last] || 0) + (1.0 - sum);
         return cycleP;
       }
 
