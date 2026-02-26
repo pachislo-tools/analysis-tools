@@ -18,331 +18,118 @@
       --shadow: 0 12px 40px rgba(0,0,0,.35);
       --radius: 18px;
       --max: 980px;
-      font-synthesis-weight:none;
-      text-rendering:optimizeLegibility;
     }
     *{box-sizing:border-box}
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(56,189,248,.18), transparent 60%),
-                  radial-gradient(1000px 500px at 90% 10%, rgba(34,197,94,.14), transparent 55%),
-                  var(--bg);
+      background: var(--bg);
       color:var(--text);
       min-height:100svh;
     }
     a{color:inherit}
-    .wrap{
-      max-width:var(--max);
-      margin:0 auto;
-      padding:28px 18px 44px;
-    }
-    header{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:16px;
-      padding:18px 4px 8px;
-    }
-    .brand{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-    .title{
-      font-size:22px;
-      font-weight:800;
-      letter-spacing:.02em;
-    }
-    .subtitle{
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.5;
-    }
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 12px;
-      border:1px solid var(--line);
-      border-radius:999px;
-      background:rgba(255,255,255,.04);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
-      font-size:12px;
-      color:var(--muted);
-      white-space:nowrap;
-      height:34px;
-    }
-    .dot{
-      width:8px;height:8px;border-radius:50%;
-      background:var(--accent2);
-      box-shadow:0 0 0 4px rgba(34,197,94,.12);
-    }
-    .hero{
-      margin-top:14px;
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-    .hero-inner{
-      padding:18px;
-      display:grid;
-      grid-template-columns: 1.3fr .7fr;
-      gap:16px;
-      align-items:stretch;
-    }
-    .hero h2{
-      margin:0 0 8px;
-      font-size:18px;
-      font-weight:800;
-    }
-    .hero p{
-      margin:0;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.7;
-    }
-    .cta{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      justify-content:center;
-    }
+    .wrap{max-width:var(--max);margin:0 auto;padding:28px 18px 44px;}
+    header{display:flex;justify-content:space-between;gap:16px;}
+    .title{font-size:22px;font-weight:800;}
+    .subtitle{color:var(--muted);font-size:13px;}
+    .badge{font-size:12px;color:var(--muted);}
+    .hero{margin-top:14px;border:1px solid var(--line);border-radius:var(--radius);padding:20px;}
     .btn{
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      gap:8px;
       padding:12px 14px;
       border-radius:14px;
       border:1px solid var(--line);
       background:rgba(56,189,248,.14);
-      color:var(--text);
       text-decoration:none;
-      font-weight:750;
+      font-weight:700;
       font-size:14px;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
-      transition: transform .06s ease, filter .15s ease;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
     }
-    .btn:active{transform:translateY(1px)}
     .btn.secondary{
       background:rgba(255,255,255,.04);
       color:var(--muted);
-      font-weight:700;
     }
     .grid{
       display:grid;
       grid-template-columns: repeat(12, 1fr);
       gap:14px;
-      margin-top:16px;
+      margin-top:20px;
     }
     .card{
-      grid-column: span 6;
+      grid-column: span 12;
       border:1px solid var(--line);
       border-radius:var(--radius);
-      background:linear-gradient(180deg, rgba(17,26,46,.92), rgba(15,23,42,.92));
-      box-shadow:var(--shadow);
       padding:16px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      min-height:140px;
-    }
-    .card h3{
-      margin:0;
-      font-size:15px;
-      font-weight:850;
-      letter-spacing:.01em;
-    }
-    .meta{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-      color:var(--muted);
-      font-size:12px;
-    }
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:6px 10px;
-      border-radius:999px;
-      background:rgba(255,255,255,.04);
-      border:1px solid var(--line);
-    }
-    .desc{
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.7;
-      margin-top:2px;
-      flex:1;
-    }
-    .actions{
-      display:flex;
-      gap:10px;
-      margin-top:6px;
-      flex-wrap:wrap;
     }
     .link{
       display:inline-flex;
-      align-items:center;
-      gap:8px;
       padding:10px 12px;
       border-radius:14px;
       border:1px solid var(--line);
-      background:rgba(255,255,255,.04);
-      text-decoration:none;
-      font-weight:750;
-      font-size:13px;
-      color:var(--text);
-      transition: transform .06s ease, filter .15s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .link:active{transform:translateY(1px)}
-    .link.primary{
       background:rgba(56,189,248,.14);
+      text-decoration:none;
+      font-weight:700;
+      font-size:13px;
+      margin-top:10px;
     }
     footer{
       margin-top:18px;
       color:var(--muted);
       font-size:12px;
-      line-height:1.7;
-      padding:10px 6px;
-    }
-    .notice{
-      margin-top:14px;
-      border:1px dashed rgba(255,255,255,.18);
-      border-radius:var(--radius);
-      background:rgba(255,255,255,.03);
-      padding:14px 16px;
-      color:var(--muted);
-      font-size:12.5px;
-      line-height:1.8;
-    }
-    .k{
-      color:var(--text);
-      font-weight:750;
-    }
-    @media (max-width: 760px){
-      header{flex-direction:column; align-items:flex-start}
-      .hero-inner{grid-template-columns: 1fr}
-      .card{grid-column: span 12}
-      .badge{height:auto}
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <div class="brand">
+      <div>
         <div class="title">期待値ツール置き場</div>
         <div class="subtitle">
-          スマホでサクッと使える計算ツールをまとめています。<br />
-          無料版はこのページから利用できます。
+          スマホ対応の期待値計算ツールまとめページ
         </div>
       </div>
-      <div class="badge"><span class="dot"></span>更新：<span id="updated">—</span></div>
+      <div class="badge">更新：<span id="updated">—</span></div>
     </header>
 
-    <section class="hero" aria-label="導線">
-      <div class="hero-inner">
-        <div>
-          <h2>無料ツールはこちら</h2>
-          <p>
-            まずは無料版で使い勝手を確認できます。<br />
-            有料版の案内は note に掲載します（準備中）。
-          </p>
-        </div>
-        <div class="cta">
-          <!-- ↓ここをあなたのnoteのURLに差し替え -->
-          <a class="btn" href="#" onclick="alert('noteのURLを設定してください'); return false;">note（有料版の案内）</a>
-          <a class="btn secondary" href="#tools">無料ツールを見る</a>
-        </div>
+    <section class="hero">
+      <h2>ツール導線</h2>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;">
+        <a class="btn" href="https://note.com/alive_clam3836/n/n8fe5352f72c3" target="_blank">
+          有料版（note）
+        </a>
+        <a class="btn secondary" href="https://pachislo-tools.github.io/analysis-tools/yutime_tool.html" target="_blank">
+          無料ツールを開く
+        </a>
       </div>
     </section>
 
-    <div class="notice">
-      <div class="k">使い方の注意</div>
-      ・期待値は目安です（入力値・平均値ベースのためブレます）<br />
-      ・端末や環境で挙動が変わる場合があります。問題があれば連絡ください。<br />
-      ・本ページは導線用のトップです。ブックマーク推奨。
-    </div>
-
-    <section id="tools" class="grid" aria-label="ツール一覧">
-      <!-- 無料ツールカード（例） -->
+    <section class="grid">
       <article class="card">
-        <h3>無料版：ツールA</h3>
-        <div class="meta">
-          <span class="pill">スマホ最適</span>
-          <span class="pill">簡易計算</span>
-        </div>
-        <div class="desc">
-          無料版の説明文。何ができるかを1〜2行で。<br>
-          （ここはあなたのツールに合わせて書き換え）
-        </div>
-        <div class="actions">
-          <!-- ↓無料ツールのHTMLへのパスに差し替え（例：/free/tool-a.html） -->
-          <a class="link primary" href="./free/tool-a.html">開く</a>
-          <a class="link" href="#" onclick="alert('説明ページ（任意）'); return false;">使い方</a>
-        </div>
+        <h3>無料版：遊タイム期待値計算ツール</h3>
+        <p>
+          遊タイム残り回転数から期待値を算出する無料ツール。
+          簡易検算や立ち回り判断用。
+        </p>
+        <a class="link" href="https://pachislo-tools.github.io/analysis-tools/yutime_tool.html" target="_blank">
+          ツールを開く
+        </a>
       </article>
 
-      <article class="card">
-        <h3>無料版：ツールB</h3>
-        <div class="meta">
-          <span class="pill">軽量</span>
-          <span class="pill">検算向け</span>
-        </div>
-        <div class="desc">
-          無料版の説明文。対象・入力項目・用途を短く。
-        </div>
-        <div class="actions">
-          <a class="link primary" href="./free/tool-b.html">開く</a>
-          <a class="link" href="#" onclick="alert('説明ページ（任意）'); return false;">使い方</a>
-        </div>
-      </article>
-
-      <!-- 有料導線カード -->
       <article class="card">
         <h3>有料版（note）</h3>
-        <div class="meta">
-          <span class="pill">高精度</span>
-          <span class="pill">追加機能</span>
-          <span class="pill">サポート</span>
-        </div>
-        <div class="desc">
-          有料版は精密化・対応範囲拡張・UI整備を含みます。<br />
-          配布・アクセス方法は note 側で案内します。
-        </div>
-        <div class="actions">
-          <!-- ↓ここもnoteのURLに差し替え -->
-          <a class="link primary" href="#" onclick="alert('noteのURLを設定してください'); return false;">noteへ</a>
-        </div>
-      </article>
-
-      <article class="card">
-        <h3>更新履歴</h3>
-        <div class="meta">
-          <span class="pill">version</span>
-          <span class="pill">変更点</span>
-        </div>
-        <div class="desc" id="changelog">
-          ・2026/02/15：トップページ整備<br />
-          ・（ここに更新ログを追記）
-        </div>
-        <div class="actions">
-          <a class="link" href="#" onclick="navigator.clipboard?.writeText(location.href); alert('URLをコピーしました'); return false;">URLをコピー</a>
-        </div>
+        <p>
+          精密ロジック版・拡張機能・対応機種強化版。
+          購入・詳細はnoteページにて案内。
+        </p>
+        <a class="link" href="https://note.com/alive_clam3836/n/n8fe5352f72c3" target="_blank">
+          noteを見る
+        </a>
       </article>
     </section>
 
     <footer>
-      © <span id="year"></span> / このページはGitHub Pagesで配信されています。
+      © <span id="year"></span>
     </footer>
   </div>
 
@@ -351,7 +138,7 @@
     document.getElementById('year').textContent = d.getFullYear();
     const pad = (n)=> String(n).padStart(2,'0');
     document.getElementById('updated').textContent =
-      `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())}`;
   </script>
 </body>
 </html>
