@@ -1,0 +1,548 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>実践データ入力ツール</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: sans-serif;
+        }
+
+        .input-box {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+        }
+
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background-color: #4b5563;
+            color: white;
+        }
+
+        .btn-secondary:active {
+            transform: scale(0.98);
+        }
+
+        .radio-btn input[type="radio"] {
+            display: none;
+        }
+
+        .radio-btn label {
+            display: block;
+            text-align: center;
+            padding: 0.5rem;
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            cursor: pointer;
+            color: #888;
+            transition: all 0.2s;
+        }
+
+        .radio-btn input[type="radio"]:checked+label {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+            font-weight: bold;
+        }
+
+        .radio-btn input[type="radio"]:checked+label.bg-red {
+            background-color: #ef4444;
+            border-color: #ef4444;
+        }
+
+        /* 折りたたみ用 */
+        details>summary {
+            list-style: none;
+            cursor: pointer;
+            outline: none;
+        }
+
+        details>summary::-webkit-details-marker {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app" class="max-w-md mx-auto p-4 pb-20">
+        <!-- 認証ロック画面 -->
+        <div v-if="!isAuthenticated" class="flex flex-col items-center justify-center min-h-[70vh]">
+            <h1 class="text-2xl font-bold mb-6 text-center">実践データ入力ツール</h1>
+            <div class="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-sm border border-gray-700">
+                <h2 class="text-lg font-bold mb-2 text-center text-white">購入者限定</h2>
+                <div class="text-xs text-gray-300 mb-4 leading-relaxed tracking-wide">
+                    本ツールは購入者限定です。<br>
+                    無断転載・コピー・再配布（パスワード共有を含む）は禁止しています。<br>
+                    発見した場合は、販売停止・法的措置を含む対応を行う場合があります。
+                </div>
+                <input type="password" v-model="passcodeInput" @keyup.enter="checkPasscode"
+                    class="w-full p-3 rounded input-box text-white text-center text-xl tracking-widest mb-4"
+                    placeholder="パスワードを入力">
+                <button @click="checkPasscode" class="w-full btn-primary py-3 rounded font-bold text-lg">解除</button>
+                <p v-if="passcodeError" class="text-red-400 text-center mt-3 text-sm font-bold">パスワードが違います</p>
+            </div>
+        </div>
+
+        <!-- メインツール画面 -->
+        <div v-else>
+            <h1 class="text-xl font-bold mb-4 text-center">実践データ入力ツール</h1>
+
+            <!-- 使い方アコーディオン -->
+            <details class="bg-gray-800 rounded-lg mb-4 shadow-lg border border-gray-600">
+                <summary class="font-bold p-3 text-blue-300 flex justify-between items-center">
+                    📖 使い方(タップで開閉)
+                    <span class="text-xs">▼</span>
+                </summary>
+                <div class="p-3 pt-0 text-sm text-gray-300 border-t border-gray-600 space-y-2 mt-2">
+                    <p><strong>1. 機種の準備</strong><br>まず一番下の「⚙️ 機種データベース」で打つ機種を登録し、よく出る「演出・契機」を追加します。</p>
+                    <p><strong>2. 実践データの入力</strong><br>打ち出しG数、結果（当選/ヤメ）、回収枚数などを入力します。</p>
+                    <p><strong>3. 履歴の追加</strong><br>実践中に起きた演出を、G数と一緒に追加していきます。</p>
+                    <p><strong>4. 出力＆送信</strong><br>一番下の「テキストをコピー」を押し、指定のチャット欄に貼り付けて送信してください。データが自動で回収・集計されます。</p>
+                </div>
+            </details>
+
+            <!-- 入力タブ（メイン） -->
+            <div class="bg-gray-800 rounded-lg p-4 mb-4 shadow-lg">
+                <h2 class="text-lg font-bold border-b border-gray-600 pb-2 mb-3">📝 基本データ</h2>
+
+                <div class="mb-4">
+                    <label class="block text-sm mb-1 text-gray-400">機種名</label>
+                    <select v-model="currentData.modelName" class="w-full p-3 rounded input-box text-white text-base">
+                        <option value="">選択してください</option>
+                        <option v-for="model in settings.models" :key="model.name" :value="model.name">
+                            {{ model.name }}
+                        </option>
+                    </select>
+                </div>
+
+                <!-- 打出G数(実/液晶/周期) と 結果種別 -->
+                <div class="mb-4">
+                    <div class="flex justify-between items-end mb-1">
+                        <label class="block text-sm text-gray-400">打出G数・周期</label>
+                    </div>
+                    <!-- 3連入力欄 -->
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <input type="number" v-model="currentData.startG_real"
+                                class="w-full p-2 rounded input-box text-white text-base text-center" placeholder="実G数">
+                        </div>
+                        <div class="flex-1">
+                            <input type="number" v-model="currentData.startG_lcd"
+                                class="w-full p-2 rounded input-box text-white text-base text-center"
+                                placeholder="液晶G数">
+                        </div>
+                        <div class="flex-1">
+                            <input type="number" v-model="currentData.startCycle"
+                                class="w-full p-2 rounded input-box text-white text-base text-center" placeholder="周期">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm mb-1 text-gray-400">結果</label>
+                    <div class="flex gap-1 radio-btn">
+                        <div class="flex-1">
+                            <input type="radio" id="res_win" value="win" v-model="currentData.resultType">
+                            <label for="res_win" class="rounded font-bold bg-red">当選</label>
+                        </div>
+                        <div class="flex-1">
+                            <input type="radio" id="res_quit" value="quit" v-model="currentData.resultType">
+                            <label for="res_quit" class="rounded font-bold">ヤメ</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 終了G数(実/液晶/周期)・その後の当選G数 -->
+                <div class="mb-4">
+                    <label class="block text-sm mb-1 text-gray-400">
+                        <span v-if="currentData.resultType === 'win'" class="text-red-400 font-bold">当選G数・周期</span>
+                        <span v-else class="text-blue-400 font-bold">ヤメG数・周期</span>
+                    </label>
+                    <div class="flex gap-2 mb-2">
+                        <div class="flex-1">
+                            <input type="number" v-model="currentData.endG_real"
+                                class="w-full p-2 rounded input-box text-white text-base text-center" placeholder="実G数">
+                        </div>
+                        <div class="flex-1">
+                            <input type="number" v-model="currentData.endG_lcd"
+                                class="w-full p-2 rounded input-box text-white text-base text-center"
+                                placeholder="液晶G数">
+                        </div>
+                        <div class="flex-1">
+                            <input type="number" v-model="currentData.endCycle"
+                                class="w-full p-2 rounded input-box text-white text-base text-center" placeholder="周期">
+                        </div>
+                    </div>
+
+                    <!-- ヤメ時のみ表示 -->
+                    <div v-show="currentData.resultType === 'quit'" class="mt-2">
+                        <label class="block text-sm mb-1 text-gray-400 text-xs">その後の当選実G数 <span
+                                class="text-gray-500">(任意)</span></label>
+                        <input type="number" v-model="currentData.afterHitG"
+                            class="w-full p-2 rounded input-box text-white text-base" placeholder="例: 450">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-2">
+                    <div>
+                        <label class="block text-sm mb-1 text-gray-400">投資 (枚)</label>
+                        <input type="number" v-model="currentData.invest"
+                            class="w-full p-3 rounded input-box text-white text-base" placeholder="例: 1000">
+                    </div>
+                    <div>
+                        <label class="block text-sm mb-1 text-gray-400">回収 (枚)</label>
+                        <input type="number" v-model="currentData.collect"
+                            class="w-full p-3 rounded input-box text-white text-base" placeholder="例: 500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 履歴追加エリア -->
+            <div class="bg-gray-800 rounded-lg p-4 mb-4 shadow-lg">
+                <h2 class="text-lg font-bold border-b border-gray-600 pb-2 mb-3">🕒 演出・契機履歴</h2>
+
+                <!-- 新規追加フォーム -->
+                <div class="p-3 border border-gray-600 rounded bg-gray-900 mb-3">
+                    <!-- 上段: 3種のゲーム数 -->
+                    <div class="flex gap-2 mb-2">
+                        <div class="flex-1">
+                            <input type="number" v-model="newHistory.g_real"
+                                class="w-full p-2 rounded input-box text-white text-sm text-center" placeholder="実G数">
+                        </div>
+                        <div class="flex-1">
+                            <input type="number" v-model="newHistory.g_lcd"
+                                class="w-full p-2 rounded input-box text-white text-sm text-center" placeholder="液晶G数">
+                        </div>
+                        <div class="flex-1">
+                            <input type="number" v-model="newHistory.cycle"
+                                class="w-full p-2 rounded input-box text-white text-sm text-center" placeholder="周期">
+                        </div>
+                    </div>
+                    <!-- 下段: 演出選択とボタン -->
+                    <div class="flex gap-2">
+                        <select v-model="newHistory.action" class="flex-1 p-3 rounded input-box text-white text-base">
+                            <option value="">-- 演出・契機を選択 --</option>
+                            <option v-for="action in currentModelSettings.actions" :key="action" :value="action">{{
+                                action }}</option>
+                        </select>
+
+                        <button @click="addHistory"
+                            class="btn-primary px-4 rounded text-base font-bold whitespace-nowrap shadow">追加</button>
+                    </div>
+                </div>
+
+                <!-- 履歴リスト -->
+                <div v-if="currentData.histories.length > 0">
+                    <div v-for="(history, index) in currentData.histories" :key="index"
+                        class="bg-gray-700 p-2 rounded mb-2 flex justify-between items-center text-sm shadow-sm border border-gray-600">
+                        <div class="flex-1">
+                            <div class="text-xs text-blue-300 mb-1">
+                                <span v-if="history.g_real" class="font-bold border border-blue-500 rounded px-1">{{
+                                    history.g_real }}G</span>
+                                <span v-if="history.g_lcd" class="ml-1 text-cyan-300">液晶{{ history.g_lcd }}</span>
+                                <span v-if="history.cycle" class="ml-1 text-purple-300">周期{{ history.cycle }}</span>
+                            </div>
+                            <span class="text-yellow-400 font-bold block">{{ history.action }}</span>
+                        </div>
+                        <button @click="removeHistory(index)"
+                            class="text-red-400 font-bold text-xl px-4 py-2 bg-gray-800 rounded ml-2">×</button>
+                    </div>
+                </div>
+                <div v-else class="text-center text-gray-500 text-sm py-2">まだ記録はありません</div>
+            </div>
+
+            <!-- コピー出力エリア -->
+            <div class="bg-gray-800 rounded-lg p-4 mb-8 shadow-lg">
+                <h2 class="text-lg font-bold border-b border-gray-600 pb-2 mb-3">✂️ データ出力</h2>
+                <textarea readonly v-model="outputText"
+                    class="w-full h-32 p-3 rounded input-box text-white text-sm font-mono mb-3 bg-gray-900"></textarea>
+                <button @click="copyToClipboard"
+                    class="w-full btn-primary py-4 rounded font-bold text-lg shadow-lg">テキストをコピー</button>
+                <p v-if="copySuccess" class="text-green-400 text-center mt-3 font-bold">✅ コピーしました！貼り付けてください。</p>
+            </div>
+
+            <!-- 設定タブ（下部）ローカルストレージ連携の機種データベース -->
+            <div class="bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-600 opacity-90">
+                <h2 class="text-lg font-bold border-b border-gray-600 pb-2 mb-4 text-gray-300">⚙️ 機種データベース</h2>
+
+                <!-- ① 機種の追加 -->
+                <div class="mb-5">
+                    <label class="block text-sm mb-1 text-gray-400">＋ 新しい機種を追加</label>
+                    <div class="flex gap-2">
+                        <input type="text" v-model="newModelName"
+                            class="flex-1 p-2 rounded input-box text-white text-base" placeholder="機種名を入力">
+                        <button @click="addModel" class="btn-primary px-4 rounded text-sm font-bold shadow">追加</button>
+                    </div>
+                </div>
+
+                <!-- ② 演出の編集 -->
+                <div class="mb-2">
+                    <label class="block text-sm mb-1 text-gray-400">✏️ 機種ごとの演出を編集</label>
+                    <select v-model="editingModelName" class="w-full p-2 rounded input-box text-white text-base mb-3">
+                        <option value="">編集する機種を選択</option>
+                        <option v-for="model in settings.models" :key="'edit-'+model.name" :value="model.name">
+                            {{ model.name }}
+                        </option>
+                    </select>
+
+                    <div v-if="editingModel" class="p-3 bg-gray-900 border border-gray-700 rounded-lg">
+                        <!-- 演出の追加 -->
+                        <div class="flex gap-2 mb-3">
+                            <input type="text" v-model="newActionName"
+                                class="flex-1 p-2 rounded input-box text-white text-sm" placeholder="演出・契機名を入力">
+                            <button @click="addAction"
+                                class="btn-secondary px-3 rounded text-sm font-bold shadow whitespace-nowrap">追加</button>
+                        </div>
+
+                        <!-- 登録済みの演出（バッジで表示） -->
+                        <div v-if="editingModel.actions.length > 0" class="flex flex-wrap gap-2 mb-3">
+                            <div v-for="(action, index) in editingModel.actions" :key="index"
+                                class="bg-gray-700 border border-gray-500 px-2 py-1 rounded-full text-xs flex items-center shadow">
+                                <span class="text-gray-200">{{ action }}</span>
+                                <button @click="removeAction(index)"
+                                    class="text-red-400 font-bold ml-2 text-base leading-none translate-y-[-1px]">×</button>
+                            </div>
+                        </div>
+                        <div v-else class="text-gray-500 text-xs text-center mb-3">演出リストは空です</div>
+
+                        <!-- 機種の削除 -->
+                        <div class="text-right border-t border-gray-700 pt-2 mt-2">
+                            <button @click="deleteModel"
+                                class="text-red-400 text-xs underline p-1">この機種をデータベースから削除</button>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-4 text-center">※データはブラウザに自動保存されます。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, watch, onMounted } = Vue
+
+        createApp({
+            setup() {
+                // === 認証（パスワード）関連 ===
+                const isAuthenticated = ref(false)
+                const passcodeInput = ref('')
+                const passcodeError = ref(false)
+                const CORRECT_PASS = 'data' // 簡易パスワード
+
+                // ページ読み込み時にストレージから認証状態を確認
+                onMounted(() => {
+                    const authKey = localStorage.getItem('slotDataAuth')
+                    if (authKey === 'unlocked') {
+                        isAuthenticated.value = true
+                    }
+                })
+
+                const checkPasscode = () => {
+                    if (passcodeInput.value === CORRECT_PASS) {
+                        isAuthenticated.value = true
+                        passcodeError.value = false
+                        // ブラウザに認証状態を保存
+                        localStorage.setItem('slotDataAuth', 'unlocked')
+                    } else {
+                        passcodeError.value = true
+                    }
+                }
+
+                // デフォルトの初期データ
+                const defaultSettings = {
+                    models: [
+                        {
+                            name: '北斗転生２',
+                            actions: ['シャッター', '天命の刻', 'VS牙親父']
+                        }
+                    ]
+                }
+
+                // ローカルストレージから読み込み（ない場合はデフォルト）
+                const saved = localStorage.getItem('slotDataSettings_v1')
+                const settings = ref(saved ? JSON.parse(saved) : defaultSettings)
+
+                // 設定が変更されるたびに自動保存
+                watch(settings, (newVal) => {
+                    localStorage.setItem('slotDataSettings_v1', JSON.stringify(newVal))
+                }, { deep: true })
+
+                // === 入力データ関連 ===
+                const currentData = ref({
+                    modelName: '',
+                    startG_real: '',
+                    startG_lcd: '',
+                    startCycle: '',
+                    resultType: 'win',
+                    endG_real: '',
+                    endG_lcd: '',
+                    endCycle: '',
+                    afterHitG: '',
+                    invest: '',
+                    collect: '',
+                    histories: []
+                })
+
+                const newHistory = ref({ g_real: '', g_lcd: '', cycle: '', action: '' })
+                const copySuccess = ref(false)
+
+                const currentModelSettings = computed(() => {
+                    const model = settings.value.models.find(m => m.name === currentData.value.modelName)
+                    return model || { actions: [] }
+                })
+
+                // ヘルパー: G数/液晶/周期の文字列表現を作成
+                const formatCount = (real, lcd, cycle) => {
+                    let parts = []
+                    if (real) parts.push(`${real}G`)
+                    if (lcd) parts.push(`液${lcd}`)
+                    if (cycle) parts.push(`周${cycle}`)
+                    return parts.length > 0 ? parts.join('|') : '?'
+                }
+
+                // Discord用テキストの生成
+                const outputText = computed(() => {
+                    let text = `【実践】${currentData.value.modelName || '機種未選択'}\n`
+
+                    const startStr = formatCount(currentData.value.startG_real, currentData.value.startG_lcd, currentData.value.startCycle);
+                    const endStr = formatCount(currentData.value.endG_real, currentData.value.endG_lcd, currentData.value.endCycle);
+
+                    if (currentData.value.resultType === 'win') {
+                        text += `打出: ${startStr} / 当選: ${endStr}\n`
+                    } else {
+                        text += `打出: ${startStr} / ヤメ: ${endStr}\n`
+                        if (currentData.value.afterHitG) {
+                            text += `👉(その後実G当選: ${currentData.value.afterHitG}G)\n`
+                        }
+                    }
+
+                    const invest = Number(currentData.value.invest) || 0;
+                    const collect = Number(currentData.value.collect) || 0;
+                    const diff = collect - invest;
+                    const diffStr = diff >= 0 ? `+${diff}` : `${diff}`;
+
+                    text += `投資: ${invest}枚 | 回収: ${collect}枚 (収支: ${diffStr}枚)\n`
+
+                    if (currentData.value.histories.length > 0) {
+                        text += `\n--履歴--\n`
+                        currentData.value.histories.forEach(h => {
+                            const hCount = formatCount(h.g_real, h.g_lcd, h.cycle)
+                            text += `[${hCount}] ${h.action}\n`
+                        })
+                    }
+                    return text
+                })
+
+                const addHistory = () => {
+                    if (!newHistory.value.g_real && !newHistory.value.g_lcd && !newHistory.value.cycle) {
+                        return alert('実G数・液晶G数・周期のいずれかを入力してください');
+                    }
+                    if (!newHistory.value.action) return alert('演出・契機を選択してください');
+
+                    currentData.value.histories.push({ ...newHistory.value })
+                    newHistory.value.g_real = ''
+                    newHistory.value.g_lcd = ''
+                    newHistory.value.cycle = ''
+                    newHistory.value.action = ''
+                }
+
+                const removeHistory = (index) => {
+                    currentData.value.histories.splice(index, 1)
+                }
+
+                const copyToClipboard = () => {
+                    navigator.clipboard.writeText(outputText.value).then(() => {
+                        copySuccess.value = true
+                        setTimeout(() => copySuccess.value = false, 3000)
+                    })
+                }
+
+                // === 機種データベース編集関連 ===
+                const newModelName = ref('')
+                const editingModelName = ref('')
+                const newActionName = ref('')
+
+                const editingModel = computed(() => {
+                    return settings.value.models.find(m => m.name === editingModelName.value)
+                })
+
+                const addModel = () => {
+                    const name = newModelName.value.trim()
+                    if (!name) return alert('機種名を入力してください')
+                    if (settings.value.models.find(m => m.name === name)) {
+                        return alert('すでに登録されている機種名です')
+                    }
+                    settings.value.models.push({ name: name, actions: [] })
+                    editingModelName.value = name
+                    newModelName.value = ''
+                }
+
+                const deleteModel = () => {
+                    if (!confirm(`「${editingModelName.value}」をデータベースから削除しますか？\n(※元に戻せません)`)) return
+
+                    const idx = settings.value.models.findIndex(m => m.name === editingModelName.value)
+                    if (idx !== -1) {
+                        settings.value.models.splice(idx, 1)
+                        if (currentData.value.modelName === editingModelName.value) {
+                            currentData.value.modelName = ''
+                        }
+                        editingModelName.value = ''
+                    }
+                }
+
+                const addAction = () => {
+                    const action = newActionName.value.trim()
+                    if (!action || !editingModel.value) return
+                    if (editingModel.value.actions.includes(action)) {
+                        return alert('すでに登録されている演出です')
+                    }
+                    editingModel.value.actions.push(action)
+                    newActionName.value = ''
+                }
+
+                const removeAction = (index) => {
+                    if (!editingModel.value) return
+                    editingModel.value.actions.splice(index, 1)
+                }
+
+                return {
+                    isAuthenticated, passcodeInput, passcodeError, checkPasscode,
+                    settings,
+                    currentData,
+                    newHistory,
+                    currentModelSettings,
+                    outputText,
+                    copySuccess,
+                    addHistory,
+                    removeHistory,
+                    copyToClipboard,
+                    newModelName,
+                    editingModelName,
+                    newActionName,
+                    editingModel,
+                    addModel,
+                    deleteModel,
+                    addAction,
+                    removeAction
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+
+</html>
