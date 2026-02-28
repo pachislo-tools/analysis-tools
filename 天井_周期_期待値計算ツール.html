@@ -7,56 +7,132 @@
   <title>天井／周期 期待値計算ツール</title>
   <style>
     body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", sans-serif;
-      margin: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", Arial, sans-serif;
+      margin: 0 auto;
+      padding: 16px 20px 40px;
+      max-width: 1200px;
       line-height: 1.35;
-      color: #111
+      color: #e0e0e0;
+      background: #121212;
     }
 
     .wrap {
-      max-width: 1200px;
-      margin: 0 auto
+      max-width: 100%;
     }
 
     h1 {
-      font-size: 20px;
-      margin: 0 0 12px
+      font-size: 24px;
+      font-weight: 800;
+      margin: 0 0 24px;
+      letter-spacing: -0.5px;
     }
 
     h2 {
-      font-size: 16px;
-      margin: 0 0 10px
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 16px;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 8px;
+      display: inline-block;
     }
 
     .card {
-      border: 1px solid #ddd;
-      border-radius: 14px;
-      padding: 12px;
-      background: #fff;
-      margin-bottom: 12px
+      border: none;
+      border-bottom: 1px solid #333333;
+      border-radius: 0;
+      padding: 0 0 24px 0;
+      background: transparent;
+      margin-bottom: 24px;
+    }
+
+    .card:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
     }
 
     label {
       display: block;
-      font-size: 12px;
-      color: #444;
-      margin: 10px 0 6px
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      color: #9e9e9e;
+      margin: 12px 0 6px
     }
 
-    input,
+    input:not([type="checkbox"]):not([type="file"]),
     select,
-    button,
     textarea {
       width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 12px;
-      font-size: 14px;
-      background: #fff
+      padding: 12px 14px;
+      border: 1px solid #333333;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      font-family: inherit;
+      color: #e0e0e0;
+      background: #2a2a2a;
+      box-sizing: border-box;
+      transition: all 0.2s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #448aff;
+      box-shadow: 0 0 0 2px rgba(68, 138, 255, 0.2);
+      background: #333333;
+    }
+
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: #448aff;
     }
 
     button {
-      cursor: pointer
+      width: 100%;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      background: rgba(68, 138, 255, 0.1);
+      color: #448aff;
+      box-sizing: border-box;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button:hover {
+      background: rgba(68, 138, 255, 0.15);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    #btnCalc,
+    #btnCalcAndSave,
+    #btnApplyMachineTpl {
+      background: #448aff;
+      color: #fff;
+      border-radius: 99px;
+      padding: 14px 24px;
+      font-size: 16px;
+      box-shadow: 0 4px 14px rgba(68, 138, 255, 0.3);
+    }
+
+    #btnCalc:hover,
+    #btnCalcAndSave:hover,
+    #btnApplyMachineTpl:hover {
+      background: #2979ff;
+      box-shadow: 0 6px 20px rgba(68, 138, 255, 0.4);
     }
 
     textarea {
@@ -94,11 +170,30 @@
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
-      align-items: center
+      align-items: center;
     }
 
     .btns button {
-      width: auto
+      width: auto;
+    }
+
+    @media (max-width: 720px) {
+      .btns {
+        justify-content: space-between;
+      }
+
+      .btns button:not(#btnCalc):not(#btnCalcAndSave):not(#btnApplyMachineTpl) {
+        flex: 1 1 calc(33.333% - 10px);
+        font-size: 13px;
+        padding: 10px 4px;
+      }
+
+      #btnCalc,
+      #btnCalcAndSave,
+      #btnApplyMachineTpl {
+        flex: 1 1 100%;
+        width: 100%;
+      }
     }
 
     .pill {
@@ -112,6 +207,7 @@
 
     .hint {
       background: #f4fff7;
+      color: #1a1a1a;
       border: 1px solid #d8ffe5;
       padding: 10px;
       border-radius: 12px
@@ -119,6 +215,7 @@
 
     .warn {
       background: #fff7e6;
+      color: #1a1a1a;
       border: 1px solid #ffd59a;
       padding: 10px;
       border-radius: 12px
@@ -142,7 +239,7 @@
 
     th,
     td {
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid #333333;
       padding: 8px;
       text-align: left;
       font-size: 13px;
@@ -151,18 +248,28 @@
 
     th {
       font-size: 12px;
-      color: #555;
+      color: #9e9e9e;
       position: sticky;
       top: 0;
-      background: #fff
+      background: #1a1a1a;
     }
 
     .cell-inp {
       width: 100%;
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      font-size: 13px
+      padding: 8px 12px;
+      border: 1px solid #333333;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #e0e0e0;
+      background: #2a2a2a;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+
+    .cell-inp:focus {
+      outline: none;
+      border-color: #448aff;
+      background: #333333;
     }
 
     .kpi {
@@ -178,14 +285,16 @@
     }
 
     .kpi .box {
-      border: 1px solid #eee;
-      border-radius: 14px;
-      padding: 10px
+      border: none;
+      border-left: 2px solid #333333;
+      border-radius: 0;
+      padding: 8px 0 8px 12px;
     }
 
     .kpi .v {
-      font-size: 20px;
-      font-weight: 700
+      font-size: 18px;
+      font-weight: 700;
+      color: #448aff
     }
 
     details summary {
@@ -206,10 +315,11 @@
 
     /* --- 公開向けUI微調整 --- */
     .kpi-emph {
-      border: 2px solid #e5e7eb;
-      border-radius: 14px;
-      padding: 10px;
-      background: #fff;
+      border: none;
+      border-top: 1px solid #333333;
+      border-radius: 0;
+      padding: 16px 0;
+      background: transparent;
     }
 
     .kpi-emph .num {
@@ -283,6 +393,7 @@
 
     .gate .panel {
       background: #fff;
+      color: #1a1a1a;
       border-radius: 16px;
       border: 1px solid #ddd;
       padding: 18px;
@@ -418,6 +529,13 @@
           </div>
         </details>
 
+        <details style="margin-top:10px;">
+          <summary style="cursor:pointer; font-weight:800;">⑦ ゾーン計算の仕様</summary>
+          <div style="margin-top:8px; line-height:1.75;">
+            ・<b>ヤメpt指定が空欄の場合</b>：指定した「ヤメ周期」を最後まで回してヤメる（周期抜けヤメ）計算になります。<br>
+            ・<b>ヤメpt指定を入力した場合</b>：その周期内の「指定pt」到達＋「前兆確認G数」を回してヤメる計算になります。<br>
+          </div>
+        </details>
 
         <div style="margin-top:10px; color:#b45309;">
           ※機械割が100%付近（目安：99.5%〜100.5%）の場合、期待値が小さいため派生計算（時給など）がブレやすいです。参考値として扱ってください。
@@ -613,14 +731,15 @@
       <div class="row3" style="margin-top:14px;">
 
         <div
-          style="grid-column: 1 / -1; border:1px solid #e6e6e6; border-radius:12px; padding:10px; background:#fafafa;">
+          style="grid-column: 1 / -1; border:1px solid #e6e6e6; border-radius:12px; padding:10px; background:#fafafa; color:#1a1a1a;">
           <div style="font-weight:700; margin-bottom:6px;">天井狙いモード</div>
           <div class="row2" style="align-items:end; gap:10px;">
             <div style="flex:1 1 240px;">
               <label>モード選択</label>
               <select id="tenjoModeSel">
-                <option value="cycle" selected>周期天井狙い（推奨）</option>
+                <option value="cycle" selected>周期天井狙い</option>
                 <option value="game">ゲーム数天井狙い</option>
+                <option value="zone">ゾーン狙い</option>
               </select>
               <div class="muted" style="font-size:12px;">※切替は「累計スルー回数」の上</div>
             </div>
@@ -701,6 +820,33 @@
           </select></div>
         <div><label>開始pt（現在pt）</label><input id="startPt" type="number" step="1" value="0" />
           <div class="muted">※その時点までに溜まっているpt</div>
+        </div>
+
+        <div id="paneZone"
+          style="display:none; margin-top:10px; padding:12px; background:#f0f8ff; border-radius:8px; border:1px solid #cce0ff;">
+          <div class="row3">
+            <div>
+              <label>ヤメ周期（ゾーン狙い）</label>
+              <select id="quitCycle">
+                <option value="1">1周期目やめ</option>
+                <option value="2">2周期目やめ</option>
+                <option value="3">3周期目やめ</option>
+                <option value="4">4周期目やめ</option>
+                <option value="5">5周期目やめ</option>
+              </select>
+              <div class="muted">※周期抜けでヤメる場合</div>
+            </div>
+            <div>
+              <label>ヤメpt指定</label>
+              <input id="quitPt" type="number" step="1" placeholder="未指定（空欄）" />
+              <div class="muted">※指定したptでゾーンヤメする場合</div>
+            </div>
+            <div>
+              <label>ヤメptからの前兆確認（G）</label>
+              <input id="quitPreG" type="number" step="1" value="10" />
+              <div class="muted">※ヤメpt指定時のみ有効</div>
+            </div>
+          </div>
         </div>
 
         <div class="row3" style="margin-top:10px;">
@@ -2275,14 +2421,14 @@
         const U = dataModel._ui;
 
         // selects (calc area)
-        const selIds = ["selMachineTpl", "selModeDist", "selCycleDist", "selPt1", "selPt2p", "selPtShort", "selModeTrans", "selModeAtLeast", "startCycle", "preType", "prePtPick", "selCycleShort"];
+        const selIds = ["selMachineTpl", "selModeDist", "selCycleDist", "selPt1", "selPt2p", "selPtShort", "selModeTrans", "selModeAtLeast", "startCycle", "preType", "prePtPick", "selCycleShort", "quitCycle", "tenjoModeSel"];
         selIds.forEach(id => {
           const el = document.getElementById(id);
           if (el) U[id] = el.value;
         });
 
         // inputs
-        const inpIds = ["ptPerG", "spinPer1k", "speedGph", "ty", "junzo", "directDenom", "preG", "prePtMin", "prePtMax", "prePtCustom", "throughCount", "startPt", "modeAtLeastPct", "shortThPt", "ceilFrom", "ceilTo", "lendCoinsPer1k", "exchCoinsPer1k", "holdCoins", "betPerG"];
+        const inpIds = ["ptPerG", "spinPer1k", "speedGph", "ty", "junzo", "directDenom", "preG", "prePtMin", "prePtMax", "prePtCustom", "throughCount", "startPt", "modeAtLeastPct", "shortThPt", "ceilFrom", "ceilTo", "lendCoinsPer1k", "exchCoinsPer1k", "holdCoins", "betPerG", "quitPt", "quitPreG"];
         inpIds.forEach(id => {
           const el = document.getElementById(id);
           if (el) U[id] = el.value;
@@ -2314,6 +2460,9 @@
           if (el.type === "checkbox") el.checked = !!U[id];
           else el.value = U[id];
         });
+
+        // UI表示の即時反映 (Zoneモードのトグルなど)
+        if (typeof updateTenjoModeUI === "function") updateTenjoModeUI();
 
         // Restore table editor state
         if (U.tblData) {
@@ -3299,7 +3448,7 @@
 
       // ===== calc engine (from v5.2) =====
       function calcForMode(opts) {
-        const { startCycle, startPt, mode, cycleP, cyclePShort, maxCycle, pt1Profile, pt2pProfile, ptShortProfile, ptPerG, coinPerG, ty, junzo, betPerG, directDenom, preType, preG, prePtMin, prePtMax, prePtPick, prePtCustom, shortThPt } = opts;
+        const { startCycle, startPt, mode, cycleP, cyclePShort, maxCycle, pt1Profile, pt2pProfile, ptShortProfile, ptPerG, coinPerG, ty, junzo, betPerG, directDenom, preType, preG, prePtMin, prePtMax, prePtPick, prePtCustom, shortThPt, quitCycle, quitPt, quitPreG } = opts;
 
         // ---- hazard (当選周期分布) を「通常」と「短縮（次回周期〜）」で用意 ----
         function buildHazard(cyclePMap) {
@@ -3364,83 +3513,150 @@
         }
 
         function dp(cycle, shortFlag, cutPt) {
-          if (cycle > maxCycle) return { pHit: 0, ePt: 0, eCycleSum: 0 };
+          if (cycle > maxCycle) return { pHit: 0, ePt: 0, eCycleSum: 0, pForcedQuit: 0 };
+
+          const isQuitCycle = (quitCycle && cycle === quitCycle);
+          const qPt = (quitPt != null) ? quitPt : null;
+
           const key = cycle + "|" + (shortFlag ? 1 : 0) + "|" + (cutPt == null ? "-" : String(cutPt));
           if (memo[key] != null) return memo[key];
 
           const arr0 = getArrForCycle(cycle, shortFlag);
-          // 開始周期のみ、開始pt未満の「到達pt」を除外（条件付き分布）
           let arr = arr0;
           const cut = (cutPt != null && cycle === startCycle) ? (+cutPt || 0) : null;
           if (arr0 && cut != null) {
             arr = adjustArrForCut(arr0, cut);
-            // 全レンジが開始pt未満なら、この周期はもう当たらないので次周期へ
             if (arr.length === 0) {
               const next = dp(cycle + 1, false, null);
               memo[key] = next; return next;
             }
           }
-          // その周期のpt分布がない場合でも、当選周期分布だけで進める（pt=0扱い）
           let sumP = 0;
           if (arr) {
-            for (const it of arr) { const p = +it.p || 0; if (p > 0) sumP += p; }
+            for (const it of arr) { const p = +it.p || 0; if (p <= 0) continue; sumP += p; }
           }
-          if (sumP <= 0) sumP = 1;
+          if (sumP <= 0) sumP = 1; // Avoid division by zero if arr is empty or all probabilities are zero
 
           const hk = getHazard(cycle, shortFlag);
 
-          // 当該周期の到達pt期待値
-          let expThis = 0;
+          let res_pHit = 0, res_ePt = 0, res_eCycleSum = 0, res_pForcedQuit = 0;
+
           if (arr) {
             for (const it of arr) {
               const p = +it.p || 0; if (p <= 0) continue;
-              const w = p / sumP;
+              const w = p / sumP; // Normalized probability for this pt range
               const pt = pickRangePt(it, prePtPick);
               const trig = (!shortFlag && enableShort && (pt >= (shortThPt || 0)));
               const ptEff = (trig && shortAvg.ok) ? shortAvg.avg : pt;
-              expThis += (cut != null ? Math.max(0, ptEff - cut) : ptEff) * w;
-            }
-          }
+              const effCut = cut != null ? Math.max(0, ptEff - cut) : ptEff;
 
-          // ミス時：次周期へ（判定pt到達なら「次の周期だけ」shortFlag=true）
-          let miss = { pHit: 0, ePt: 0, eCycleSum: 0 };
-          if (hk < 1) {
-            if (arr) {
-              for (const it of arr) {
-                const p = +it.p || 0; if (p <= 0) continue;
-                const w = p / sumP;
-                const pt = pickRangePt(it, prePtPick);
-                const trig = (!shortFlag && enableShort && (pt >= (shortThPt || 0)));
-                const ptEff = (trig && shortAvg.ok) ? shortAvg.avg : pt;
-                const next = dp(cycle + 1, trig ? true : false, null);
-                miss.pHit += w * next.pHit;
-                miss.ePt += w * ((cut != null ? Math.max(0, ptEff - cut) : ptEff) + next.ePt);
-                miss.eCycleSum += w * next.eCycleSum;
+              const isQuitCycle = (quitCycle && cycle === quitCycle);
+              const qPt = (isQuitCycle && quitPt != null) ? quitPt : null;
+              const coveragePt = (qPt != null) ? (qPt + (quitPreG || 0) * (ptPerG > 0 ? ptPerG : 1)) : null;
+
+              let p_hit_ratio = 1.0;
+              if (coveragePt != null) {
+                if (it.min > coveragePt) {
+                  p_hit_ratio = 0.0;
+                } else if (it.max > coveragePt) {
+                  p_hit_ratio = (coveragePt - it.min + 1) / (it.max - it.min + 1);
+                }
               }
+              const p_miss_ratio = 1.0 - p_hit_ratio;
+
+              // --- 1. カバレッジ内の処理（当たる可能性がある部分） ---
+              if (p_hit_ratio > 0) {
+                const w_hit = w * p_hit_ratio;
+                const hit_range = { min: it.min, max: (coveragePt != null ? Math.min(it.max, coveragePt) : it.max) };
+                const ptEff_hit = pickRangePt(hit_range, prePtPick);
+                const trig_hit = (!shortFlag && enableShort && (ptEff_hit >= (shortThPt || 0)));
+                const ptEffFinal_hit = (trig_hit && shortAvg.ok) ? shortAvg.avg : ptEff_hit;
+                const effCut_hit = cut != null ? Math.max(0, ptEffFinal_hit - cut) : ptEffFinal_hit;
+
+                const hit_pHit = 1;
+                const hit_ePt = effCut_hit;
+                const hit_eCycleSum = cycle;
+                const hit_pForcedQuit = 0; // 当たるので通常のpreGをグローバルで計算
+
+                let hz_miss_pHit = 0, hz_miss_ePt = 0, hz_miss_eCycleSum = 0, hz_miss_pForcedQuit = 0;
+                if (isQuitCycle) {
+                  // ヤメ周期内：本区間では到達（CZ等）したが、ハズレてしまった場合
+                  if (qPt != null && ptEffFinal_hit > qPt) {
+                    // qPt指定があり、かつ実際の到達予定ptがqPtを超えている場合
+                    // qPtで強制ヤメとなり、当たらず終わる
+                    hz_miss_ePt = cut != null ? Math.max(0, qPt - cut) : qPt;
+                    hz_miss_eCycleSum = cycle;
+                    hz_miss_pForcedQuit = 1;
+                  } else {
+                    // qPt指定がない、もしくはptEff_hitがqPt以内の場合
+                    // そのptまで到達してハズレ
+                    hz_miss_ePt = effCut_hit;
+                    hz_miss_eCycleSum = cycle;
+                    // ここでヤメるので「強制終了扱い(1)」にしてquitPreGを使うか、
+                    // もしくは通常の「周期抜けヤメ」として扱う(0)かの判断。
+                    // ■ qPtがあるならゾーン抜けとして強制ヤメ扱い(quitPreG)
+                    // ■ qPtがないなら単なる周期終了ヤメ扱い(通常のnormalPreGを使わせるため0)
+                    hz_miss_pForcedQuit = (qPt != null) ? 1 : 0;
+                  }
+                } else {
+                  // 次の周期へ進行
+                  const next = (hk < 1) ? dp(cycle + 1, trig_hit ? true : false, null) : { pHit: 0, ePt: 0, eCycleSum: 0, pForcedQuit: 0 };
+                  hz_miss_pHit = next.pHit;
+                  hz_miss_ePt = effCut_hit + next.ePt;
+                  hz_miss_eCycleSum = next.eCycleSum;
+                  hz_miss_pForcedQuit = next.pForcedQuit || 0;
+                }
+
+                res_pHit += w_hit * (hk * hit_pHit + (1 - hk) * hz_miss_pHit);
+                res_ePt += w_hit * (hk * hit_ePt + (1 - hk) * hz_miss_ePt);
+                res_eCycleSum += w_hit * (hk * hit_eCycleSum + (1 - hk) * hz_miss_eCycleSum);
+                res_pForcedQuit += w_hit * (hk * hit_pForcedQuit + (1 - hk) * hz_miss_pForcedQuit);
+              }
+
+              // --- 2. カバレッジ外の処理（到達前に強制的にヤメる部分） ---
+              if (p_miss_ratio > 0) {
+                const w_miss = w * p_miss_ratio;
+                // 到達前に qPt でヤメて前兆を確認する
+                const capEff = cut != null ? Math.max(0, qPt - cut) : qPt;
+
+                res_pHit += 0;
+                res_ePt += w_miss * capEff;
+                res_eCycleSum += w_miss * cycle;
+                res_pForcedQuit += w_miss; // 強制ヤメなので quitPreG を使用
+              }
+            }
+          } else {
+            // No pt distribution, effectively pt=0
+            // If quitCycle is active and we are in it, it's a forced quit
+            if (isQuitCycle) {
+              res_pHit = 0;
+              res_ePt = 0;
+              res_eCycleSum = cycle;
+              res_pForcedQuit = 0; // Since pt=0 is always <= qPt, normal preG applies
             } else {
-              const next = dp(cycle + 1, false, null);
-              miss = next;
+              const next = (hk < 1) ? dp(cycle + 1, false, null) : { pHit: 0, ePt: 0, eCycleSum: 0, pForcedQuit: 0 };
+              res_pHit = hk + (1 - hk) * next.pHit;
+              res_ePt = (1 - hk) * next.ePt;
+              res_eCycleSum = hk * cycle + (1 - hk) * next.eCycleSum;
+              res_pForcedQuit = (1 - hk) * next.pForcedQuit;
             }
           }
 
-          const res = {
-            pHit: hk + (1 - hk) * miss.pHit,
-            ePt: hk * expThis + (1 - hk) * miss.ePt,
-            eCycleSum: hk * cycle + (1 - hk) * miss.eCycleSum
-          };
+          const res = { pHit: res_pHit, ePt: res_ePt, eCycleSum: res_eCycleSum, pForcedQuit: res_pForcedQuit };
           memo[key] = res;
           return res;
         }
 
         const r0 = dp(startCycle, false, (startPt || 0));
 
-        // dp()側で開始pt未満を除外しているので、ここでの差し引きは不要
+        // dp()で開始pt引いてるので、ここでの差は不要
         let expPt = (r0.ePt || 0);
         const hitProb = r0.pHit || 0;
+        const pForcedQuit = r0.pForcedQuit || 0;
 
         if (ptPerG <= 0 || coinPerG <= 0) {
           const avgHitCycle = (hitProb > 0) ? ((r0.eCycleSum || 0) / hitProb) : 0;
-          return { ev: 0, invest: 0, hitProb: hitProb, avgHitCycle: avgHitCycle, expGames: 0, expPt: expPt };
+          return { ev: 0, invest: 0, hitProb: hitProb, avgHitCycle: avgHitCycle, expGames: 0, expPt: expPt, pForcedQuit: pForcedQuit };
         }
 
         // 前兆起点ptの決定（幅対応）
@@ -3454,16 +3670,25 @@
         // まずpt→G（ベース）
         let baseGames = expPt / ptPerG;
 
-        // 前兆の加算（近似）
-        if ((preG || 0) > 0) {
+        let normalPreG = preG || 0;
+
+        // 【前兆分を加算（本来の当選/ハズレ分）】
+        // これは quit していない（本来のサイクル通りに進行した）分の期待値に対して適用
+        let normalAdded = 0;
+        if (normalPreG > 0) {
           if (preType === "after") {
-            baseGames = baseGames + preG;
+            normalAdded = Number(normalPreG);
           } else {
-            // 前前兆：前兆開始pt到達後、前兆Gが下限になる
+            // 前前兆（起点から前兆）の場合
             const preStartGames = Math.max(0, (prePt - (startPt || 0)) / ptPerG);
-            baseGames = Math.max(baseGames, preStartGames + preG);
+            normalAdded = Math.max(0, preStartGames + Number(normalPreG) - baseGames);
           }
         }
+
+        // 強制ヤメ（Zone抜け・pt指定抜け）したケースでは、そこから純粋に quitPreG 分回す
+        // 到達していないケース（本来のルート）では、normalAdded のG数が加算される
+        // （※pForcedQuit は「指定したヤメ条件の"上限"で強制打ち切りになった確率」）
+        baseGames += normalAdded * (1 - pForcedQuit) + Number(quitPreG || 0) * pForcedQuit;
 
         // 直撃（暫定）：通常時G中の独立当選として「直撃が先に来る確率」を反映
         let pDirectWindow = 0;
@@ -3666,6 +3891,28 @@
           return isFinite(v) ? Math.max(0, v) : null;
         })();
 
+        const quitCycle = (() => {
+          if (tenjoMode === "zone") {
+            const qc = document.getElementById("quitCycle");
+            return qc ? parseInt(qc.value, 10) : null;
+          }
+          return null;
+        })();
+
+        const quitPt = (() => {
+          if (tenjoMode === "zone") {
+            const el = document.getElementById("quitPt");
+            const val = el ? parseInt(el.value, 10) : NaN;
+            return isFinite(val) ? val : null;
+          }
+          return null;
+        })();
+
+        const quitPreG = (() => {
+          const el = document.getElementById("quitPreG");
+          return el ? (parseInt(el.value, 10) || 0) : 0;
+        })();
+
         function calcTotalsOnce() {
           let total期待値 = 0, totalInvest = 0, totalHitProb = 0, totalAvgHitCycle = 0, totalGames = 0, totalGamesAll = 0, totalPt = 0;
 
@@ -3680,7 +3927,7 @@
               startCycle, startPt, mode, cycleP, cyclePShort, maxCycle,
               pt1Profile: pt1, pt2pProfile: pt2p, ptPerG, coinPerG, ty, directDenom,
               preType, preG, prePtMin, prePtMax, prePtPick, prePtCustom,
-              shortThPt, ptShortProfile: ptShort, junzo, betPerG
+              shortThPt, ptShortProfile: ptShort, junzo, betPerG, quitCycle, quitPt, quitPreG
             });
 
             total期待値 += initP * r.ev;
@@ -3744,7 +3991,7 @@
                 startCycle: sc, startPt: sp, mode, cycleP, cyclePShort, maxCycle,
                 pt1Profile: pt1, pt2pProfile: pt2p, ptPerG, coinPerG, ty, directDenom,
                 preType, preG, prePtMin, prePtMax, prePtPick, prePtCustom,
-                shortThPt, ptShortProfile: ptShort, junzo, betPerG
+                shortThPt, ptShortProfile: ptShort, junzo, betPerG, quitCycle, quitPt, quitPreG
               });
 
               total期待値 += initP * r.ev;
@@ -3891,8 +4138,10 @@
         // v2: mobile-friendly select. (Fallback: radio if exists)
         const sel = document.getElementById("tenjoModeSel");
         const mode = sel ? sel.value : ((document.querySelector('input[name="tenjoMode"]:checked') || {}).value || "cycle");
-        const pane = document.getElementById("paneGameCeil");
-        if (pane) pane.style.display = (mode === "game") ? "block" : "none";
+        const paneGame = document.getElementById("paneGameCeil");
+        const paneZone = document.getElementById("paneZone");
+        if (paneGame) paneGame.style.display = (mode === "game") ? "block" : "none";
+        if (paneZone) paneZone.style.display = (mode === "zone") ? "block" : "none";
       }
       const tsel = document.getElementById("tenjoModeSel");
       if (tsel) tsel.addEventListener("change", updateTenjoModeUI);
