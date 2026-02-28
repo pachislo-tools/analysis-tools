@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -409,9 +408,9 @@
                 // ヘルパー: G数/液晶/周期の文字列表現を作成
                 const formatCount = (real, lcd, cycle) => {
                     let parts = []
-                    if (real) parts.push(`${real}G`)
-                    if (lcd) parts.push(`液${lcd}`)
-                    if (cycle) parts.push(`周${cycle}`)
+                    if (real !== '' && real !== null && real !== undefined) parts.push(`${real}G`)
+                    if (lcd !== '' && lcd !== null && lcd !== undefined) parts.push(`液${lcd}`)
+                    if (cycle !== '' && cycle !== null && cycle !== undefined) parts.push(`周${cycle}`)
                     return parts.length > 0 ? parts.join('|') : '?'
                 }
 
